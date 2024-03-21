@@ -7,6 +7,10 @@ library(ggplot2)
 library(corrplot)
 library(Hmisc)
 library(PerformanceAnalytics)
+library(rworldmap)
+library(terra)
+library(geodata)
+library(kgc)
 
 
 #Load in lit review data from Google Sheet (saved on PC):
@@ -40,6 +44,34 @@ colnames(dat)[colnames(dat) == "TP_mg_L-1"] <- "TP_mg_L"
 colnames(dat)[colnames(dat) == "TN_mg_L-1"] <- "TN_mg_L"
 colnames(dat)[colnames(dat) == "Chl-a_mg_L-1"] <- "Chl-a_mg_L"
 
+#### insert Koppen Geiger climate data ####
+
+# Round coordinates
+dat$rndCoord.lon <- RoundCoordinates(dat$Longitude)
+dat$rndCoord.lat <- RoundCoordinates(dat$Latitude)
+
+# add a new column with KG climate zone
+dat$KG_climatezone <- LookupCZ(dat)
+
+# The Köppen climate classification divides climates into five main climate groups, with each group being divided based on patterns of seasonal precipitation and temperature, add a column for each main group:
+
+dat <- dat %>%
+  mutate(KG_climatezone = as.character(KG_climatezone)) %>%
+  mutate(KGMain_climate_group = case_when(
+    startsWith(KG_climatezone, "A") ~ "Tropical",
+    startsWith(KG_climatezone, "B") ~ "Arid",
+    startsWith(KG_climatezone, "C") ~ "Temperate",
+    startsWith(KG_climatezone, "D") ~ "Continental",
+    startsWith(KG_climatezone, "E") ~ "Polar",
+    TRUE ~ NA_character_  # If none of the above conditions match, assign NA
+  )) 
+  
+dat <- dat %>%
+  mutate(KG_climatezone = as.factor(KG_climatezone)) %>% 
+  mutate(KGMain_climate_group = as.factor(KGMain_climate_group)) 
+
+
+
 #### Plots #####
 
 # Publication year frequency plot
@@ -60,7 +92,7 @@ hist(dat$Mean_width_m)
 # Mean depth
 hist(dat$Mean_water_depth_m)
 
-### GHG data ###
+#### GHG data ####
 summary(dat$g_CO2_m2_yr)
 summary(dat$CH4_diffusive_g_CH4_m2_yr)
 summary(dat$CH4_ebullitive_g_CH4_m2_yr)
@@ -68,7 +100,7 @@ summary(dat$g_N2O_m2_yr)
 
 
 
-### Correlation plot
+#### Correlation plot ####
 numeric_dat <- dat[sapply(dat, is.numeric)] # subset numeric data
 
 numeric_dat <- numeric_dat  %>%
@@ -103,99 +135,94 @@ corrplot(res2$r, type = "upper", order = "hclust",
          tl.col = "black", tl.srt = 45, p.mat = res2$P, sig.level = 0.05, insig = "blank")
 
 
-chart.Correlation(my_data, histogram=TRUE, pch=19)
+chart.Correlation(numeric_dat, histogram=TRUE, pch=19)
+warnings()
 
 
 
-### Sampling method
+#### Sampling method ####
 CO2method <- ggplot(dat, aes(x=GHG_sampling_method , y=g_CO2_m2_yr, fill=GHG_sampling_method) )+   geom_boxplot(outlier.shape = NA) +  geom_point(position = position_jitter(width = 0.15), size = 2) + theme_minimal()
 CO2method
-
-CH4method <- ggplot(dat, aes(x=GHG_sampling_method , y=CH4_diffusive_g_CH4_m2_yr, fill=GHG_sampling_method) )+   geom_boxplot(outlier.shape = NA) +  geom_point(position = position_jitter(width = 0.15), size = 2) + theme_minimal()
-CH4method
 
 N2Omethod <- ggplot(dat, aes(x=GHG_sampling_method , y=g_N2O_m2_yr, fill=GHG_sampling_method) )+   geom_boxplot(outlier.shape = NA) +  geom_point(position = position_jitter(width = 0.15), size = 2) + theme_minimal() + scale_y_log10()
 N2Omethod
 
-### GHG and trophic status
+#### Trophic status ####
 
 CO2trophic <- ggplot(dat, aes(x=Nutrient_status , y=g_CO2_m2_yr, fill=Nutrient_status)) +
   geom_boxplot(outlier.shape = NA) +  geom_point(position = position_jitter(width = 0.15), size = 2) + theme_minimal()
 CO2trophic
 
-CH4trophic <- ggplot(dat, aes(x=Nutrient_status , y=CH4_diffusive_g_CH4_m2_yr , fill=Nutrient_status)) +   geom_boxplot(outlier.shape = NA) +  geom_point(position = position_jitter(width = 0.15), size = 2) + theme_minimal()
-CH4trophic
-
 N2Otrophic <- ggplot(dat, aes(x=Nutrient_status , y=g_N2O_m2_yr , fill=Nutrient_status)) +   geom_boxplot(outlier.shape = NA) +  geom_point(position = position_jitter(width = 0.15), size = 2) + theme_minimal() + scale_y_log10()
 N2Otrophic
 
 
-### GHG and land use
+#### Land use ####
 
 CO2landuse <- ggplot(dat, aes(x=Land_use , y=g_CO2_m2_yr, fill=Land_use)) +
   geom_boxplot(outlier.shape = NA) +  geom_point(position = position_jitter(width = 0.15), size = 2) + theme_minimal()
 CO2landuse
 
-CH4landuse <- ggplot(dat, aes(x=Land_use , y=CH4_diffusive_g_CH4_m2_yr, fill=Land_use)) +
-  geom_boxplot(outlier.shape = NA) +  geom_point(position = position_jitter(width = 0.15), size = 2) + theme_minimal()
-CH4landuse
-
 N2Olanduse <- ggplot(dat, aes(x=Land_use , y=g_N2O_m2_yr, fill=Land_use)) +
   geom_boxplot(outlier.shape = NA) +  geom_point(position = position_jitter(width = 0.15), size = 2) + theme_minimal() + scale_y_log10()
 N2Olanduse
 
+#### Soil type ####
+CO2soil <- ggplot(dat, aes(x=Soil_type , y=g_CO2_m2_yr, fill=Soil_type)) +
+  geom_boxplot(outlier.shape = NA) +  geom_point(position = position_jitter(width = 0.15), size = 2) + theme_minimal()
+CO2soil
 
-### Hydrological regime
+N2Osoil <- ggplot(dat, aes(x=Soil_type , y=g_N2O_m2_yr, fill=Soil_type)) +
+  geom_boxplot(outlier.shape = NA) +  geom_point(position = position_jitter(width = 0.15), size = 2) + theme_minimal() + scale_y_log10()
+N2Osoil
+
+#### Hydrological regime ####
 CO2hydro <- ggplot(dat, aes(x=Hydrological_regime , y=g_CO2_m2_yr, fill=Hydrological_regime)) + geom_boxplot(outlier.shape = NA) +  geom_point(position = position_jitter(width = 0.15), size = 2) + theme_minimal()
 CO2hydro
-
-CH4hydro <- ggplot(dat, aes(x=Hydrological_regime , y=CH4_diffusive_g_CH4_m2_yr, fill=Hydrological_regime)) + geom_boxplot(outlier.shape = NA) +  geom_point(position = position_jitter(width = 0.15), size = 2) + theme_minimal()
-CH4hydro
 
 N2Ohydro <- ggplot(dat, aes(x=Hydrological_regime , y=g_N2O_m2_yr, fill=Hydrological_regime)) + geom_boxplot(outlier.shape = NA) +  geom_point(position = position_jitter(width = 0.15), size = 2) + theme_minimal()  + scale_y_log10()
 N2Ohydro
 
-### Effects of climate variables
+#### Climate zone ####
+CO2KGclimate <- ggplot(dat, aes(x=KGMain_climate_group , y=g_CO2_m2_yr, fill=KGMain_climate_group)) + geom_boxplot(outlier.shape = NA) +  geom_point(position = position_jitter(width = 0.15), size = 2) + theme_minimal()
+CO2KGclimate
+
+CO2climate <- ggplot(dat, aes(x=Climate_zone , y=g_CO2_m2_yr, fill=Climate_zone)) + geom_boxplot(outlier.shape = NA) +  geom_point(position = position_jitter(width = 0.15), size = 2) + theme_minimal()
+CO2climate
+
+N2OKGclimate <- ggplot(dat, aes(x=KGMain_climate_group , y=g_N2O_m2_yr, fill=KGMain_climate_group)) + geom_boxplot(outlier.shape = NA) +  geom_point(position = position_jitter(width = 0.15), size = 2) + theme_minimal()  + scale_y_log10()
+N2OKGclimate
+
+N2Oclimate <- ggplot(dat, aes(x=Climate_zone , y=g_N2O_m2_yr, fill=Climate_zone)) + geom_boxplot(outlier.shape = NA) +  geom_point(position = position_jitter(width = 0.15), size = 2) + theme_minimal() + scale_y_log10()
+N2Oclimate
+
+
+#### Effects of climate variables ####
 CO2temp <- ggplot(dat, aes(x=MATemp_C , y=g_CO2_m2_yr)) + geom_point(size = 2) + theme_minimal()
 CO2temp
-
-CH4temp <- ggplot(dat, aes(x=MATemp_C , y=CH4_diffusive_g_CH4_m2_yr)) + geom_point(size = 2) + theme_minimal()
-CH4temp
-
-N2Otemp <- ggplot(dat, aes(x=MATemp_C , y=g_N2O_m2_yr)) + geom_point(size = 2) + theme_minimal()
-N2Otemp
 
 CO2precip <- ggplot(dat, aes(x=MAPrecip_mm , y=g_CO2_m2_yr)) + geom_point(size = 2) + theme_minimal()
 CO2precip
 
-CH4precip <- ggplot(dat, aes(x=MAPrecip_mm , y=CH4_diffusive_g_CH4_m2_yr)) + geom_point(size = 2) + theme_minimal()
-CH4precip
+N2Otemp <- ggplot(dat, aes(x=MATemp_C , y=g_N2O_m2_yr)) + geom_point(size = 2) + theme_minimal()
+N2Otemp
 
 N2Oprecip <- ggplot(dat, aes(x=MAPrecip_mm , y=g_N2O_m2_yr)) + geom_point(size = 2) + theme_minimal()
 N2Oprecip
 
-### GHG and elevation 
+#### GHG and elevation ####
 CO2elev <- ggplot(dat, aes(x=Elevation_masl , y=g_CO2_m2_yr)) + geom_point(size = 2) + theme_minimal()
 CO2elev
-
-CH4elev <- ggplot(dat, aes(x=Elevation_masl , y=CH4_diffusive_g_CH4_m2_yr)) + geom_point(size = 2) + theme_minimal()
-CH4elev
 
 N2Oelev <- ggplot(dat, aes(x=Elevation_masl , y=g_N2O_m2_yr)) + geom_point(size = 2) + theme_minimal()
 N2Oelev
 
-### GHG and width/depth
+#### GHG and width/depth ####
 CO2width <- ggplot(dat, aes(x=Mean_width_m , y=g_CO2_m2_yr)) + geom_point(size = 2) + theme_minimal()
 CO2width
 
 CO2depth <- ggplot(dat, aes(x=Mean_water_depth_m , y=g_CO2_m2_yr)) + geom_point(size = 2) + theme_minimal()
 CO2depth
-
-CH4width <- ggplot(dat, aes(x=Mean_width_m , y=CH4_diffusive_g_CH4_m2_yr)) + geom_point(size = 2) + theme_minimal()
-CH4width
-
-CH4depth <- ggplot(dat, aes(x=Mean_water_depth_m , y=CH4_diffusive_g_CH4_m2_yr)) + geom_point(size = 2) + theme_minimal()
-CH4depth
 
 N2Owidth <- ggplot(dat, aes(x=Mean_width_m , y=g_N2O_m2_yr)) + geom_point(size = 2) + theme_minimal()
 N2Owidth
@@ -204,8 +231,7 @@ N2Odepth <- ggplot(dat, aes(x=Mean_water_depth_m , y=g_N2O_m2_yr)) + geom_point(
 N2Odepth
 
 
-
-### GHG and water chemistry
+#### GHG and water chemistry ####
 ## CO2
 CO2DO <- ggplot(dat, aes(x=DO_mg_L , y=g_CO2_m2_yr)) + geom_point(size = 2) + theme_minimal()
 CO2DO
@@ -225,24 +251,6 @@ CO2TP
 CO2TN <- ggplot(dat, aes(x=TN_mg_L , y=g_CO2_m2_yr)) + geom_point(size = 2) + theme_minimal()
 CO2TN
 
-## CH4
-CH4DO <- ggplot(dat, aes(x=DO_mg_L , y=CH4_diffusive_g_CH4_m2_yr)) + geom_point(size = 2) + theme_minimal()
-CH4DO
-
-CH4pH <- ggplot(dat, aes(x=pH , y=CH4_diffusive_g_CH4_m2_yr)) + geom_point(size = 2) + theme_minimal()
-CH4pH
-
-CH4EC <- ggplot(dat, aes(x=EC_us_cm , y=CH4_diffusive_g_CH4_m2_yr)) + geom_point(size = 2) + theme_minimal()
-CH4EC
-
-CH4DOC <- ggplot(dat, aes(x=DOC_mg_L , y=CH4_diffusive_g_CH4_m2_yr)) + geom_point(size = 2) + theme_minimal()
-CH4DOC
-
-CH4TP <- ggplot(dat, aes(x=TP_mg_L , y=CH4_diffusive_g_CH4_m2_yr)) + geom_point(size = 2) + theme_minimal()
-CH4TP
-
-CH4TN <- ggplot(dat, aes(x=TN_mg_L , y=CH4_diffusive_g_CH4_m2_yr)) + geom_point(size = 2) + theme_minimal()
-CH4TN
 
 ## N2O
 N2ODO <- ggplot(dat, aes(x=DO_mg_L , y=g_N2O_m2_yr)) + geom_point(size = 2) + theme_minimal()
