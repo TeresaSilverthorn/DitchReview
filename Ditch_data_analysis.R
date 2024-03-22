@@ -11,11 +11,14 @@ library(rworldmap)
 library(terra)
 library(geodata)
 library(kgc)
+library(mapproj)
 
+# Set working directory for figures
+setwd("C:/Users/teres/Documents/Ditch lit review/DitchReview/Figures/")
 
 #Load in lit review data from Google Sheet (saved on PC):
 
-dat <- readxl::read_excel("C:/Users/teres/Documents/Ditch lit review/DitchReview/Data/Ditch_data_extraction_2024-03-20.xlsx", sheet="Data_extraction", range = "A1:AL61", na = "NA") # Replace character NAs with actual NAs  # set range if you want to exclude the "Not included" studies
+dat <- readxl::read_excel("C:/Users/teres/Documents/Ditch lit review/DitchReview/Data/Ditch_data_extraction_2024-03-21.xlsx", sheet="Data_extraction", range = "A1:AL61", na = "NA") # Replace character NAs with actual NAs  # set range if you want to exclude the "Not included" studies
 
 dat <- as.data.frame(dat)
 
@@ -70,12 +73,50 @@ dat <- dat %>%
   mutate(KG_climatezone = as.factor(KG_climatezone)) %>% 
   mutate(KGMain_climate_group = as.factor(KGMain_climate_group)) 
 
+#### Clean data ####
+
+## Soil type 
+dat <- dat %>%
+  mutate(Soil_type = case_when(
+    grepl("Organic", Soil_type, ignore.case = TRUE) ~ "Organic",
+    grepl("Mineral", Soil_type, ignore.case = TRUE) ~ "Mineral",
+    TRUE ~ Soil_type  # Keep the original value if it doesn't match any condition
+  ))
+
+## Hydrological regime
+dat <- dat %>%
+  mutate(Hydrological_regime = case_when(
+    grepl("Perennial", Hydrological_regime, ignore.case = TRUE) ~ "Perennial",
+    grepl("Intermittent", Hydrological_regime, ignore.case = TRUE) ~ "Intermittent",
+    TRUE ~ NA_character_  # NA if it doesn't match any condition
+  ))
+
+## Land use
+# we could use a variation of the Corine Land Cover categories (made for Europe) : Artificial surfaces, Agricultural areas, Forest and semi-natural areas, Wetlands, Water bodies
+levels(dat$Land_use)
+
+dat <- dat %>%
+  mutate(Land_useCLC = case_when(
+    grepl("peat", Land_use, ignore.case = TRUE) ~ "Wetland",
+    grepl("Forest", Land_use, ignore.case = TRUE) ~ "Natural_Forest",
+    grepl("Sphagnum", Land_use, ignore.case = TRUE) ~ "Wetland",
+    grepl("pasture", Land_use, ignore.case = TRUE) ~ "Agriculture",
+    TRUE ~ Land_use  # Keep the original value if it doesn't match any condition
+  ))  %>%
+  select(-Land_use, everything(), Land_use, Land_useCLC) #reorder
 
 
 #### Plots #####
 
 # Publication year frequency plot
 hist(dat$Publication_year)
+
+tiff("freq_pub_yr.tiff", units="in", width=6, height=4, res=300)
+pub_yr <- ggplot(dat, aes(x = Publication_year)) +
+  geom_histogram(binwidth = 1, fill = "skyblue", color = "black") +
+  scale_x_continuous(breaks = seq(min(dat$Publication_year), max(dat$Publication_year), by = 1)) +   labs(x = "Publication Year", y = "Frequency") +  theme_minimal() + theme(axis.text.x = element_text(angle = 45,  hjust = 1), axis.ticks.x = element_line(color = "black"), text = element_text(size = 13), panel.grid.major= element_blank())
+pub_yr
+dev.off()
 
 # Elevation
 hist(dat$Elevation_masl)
@@ -91,6 +132,18 @@ hist(dat$Mean_width_m)
 
 # Mean depth
 hist(dat$Mean_water_depth_m)
+
+#### Global distribution ####
+
+world <- map_data("world")
+
+tiff("global_dis.tiff", units="in", width=6, height=4, res=300)
+global_dis <- ggplot() +
+  geom_polygon(data = world, aes(x=long, y = lat, group = group), fill="grey", alpha=0.3) +
+  geom_point( data=dat, aes(x=Longitude, y=Latitude), size= 4, colour=	"#097969", alpha=0.5, shape=16) +   theme_void() +  coord_map(xlim=c(-180,180)) 
+global_dis
+dev.off()
+
 
 #### GHG data ####
 summary(dat$g_CO2_m2_yr)
@@ -131,12 +184,11 @@ res2$P # Extract p-values
 
 cor_dat <- cor(numeric_dat, use = "pairwise.complete.obs")
 
-corrplot(res2$r, type = "upper", order = "hclust", 
-         tl.col = "black", tl.srt = 45, p.mat = res2$P, sig.level = 0.05, insig = "blank")
-
+#corrplot(res2$r, type = "upper", order = "hclust", 
+ #        tl.col = "black", tl.srt = 45, p.mat = res2$P, sig.level = 0.05, insig = "blank")
+#not sure what the number of row error is about, because the plot looks fine
 
 chart.Correlation(numeric_dat, histogram=TRUE, pch=19)
-warnings()
 
 
 
@@ -148,6 +200,11 @@ N2Omethod <- ggplot(dat, aes(x=GHG_sampling_method , y=g_N2O_m2_yr, fill=GHG_sam
 N2Omethod
 
 #### Trophic status ####
+tiff("troph_count.tiff", units="in", width=4, height=4, res=300)
+troph_count <- ggplot(dat, aes(x = Nutrient_status)) +
+geom_bar(fill=	"#097969") +   labs(y = "Frequency", x = "Trophic state") + theme_minimal() 
+troph_count
+dev.off()
 
 CO2trophic <- ggplot(dat, aes(x=Nutrient_status , y=g_CO2_m2_yr, fill=Nutrient_status)) +
   geom_boxplot(outlier.shape = NA) +  geom_point(position = position_jitter(width = 0.15), size = 2) + theme_minimal()
@@ -158,16 +215,27 @@ N2Otrophic
 
 
 #### Land use ####
+tiff("landuse_count.tiff", units="in", width=4, height=4, res=300)
+land_count <- ggplot(data = subset(dat, !is.na(Land_useCLC)), aes(x = Land_useCLC)) +
+  geom_bar(fill=	"#097969") +   labs(y = "Frequency", x = "Land use (CLC)") + theme_minimal() 
+land_count
+dev.off()
 
-CO2landuse <- ggplot(dat, aes(x=Land_use , y=g_CO2_m2_yr, fill=Land_use)) +
+CO2landuse <- ggplot(dat, aes(x=Land_useCLC , y=g_CO2_m2_yr, fill=Land_useCLC)) +
   geom_boxplot(outlier.shape = NA) +  geom_point(position = position_jitter(width = 0.15), size = 2) + theme_minimal()
 CO2landuse
 
-N2Olanduse <- ggplot(dat, aes(x=Land_use , y=g_N2O_m2_yr, fill=Land_use)) +
+N2Olanduse <- ggplot(dat, aes(x=Land_useCLC , y=g_N2O_m2_yr, fill=Land_useCLC)) +
   geom_boxplot(outlier.shape = NA) +  geom_point(position = position_jitter(width = 0.15), size = 2) + theme_minimal() + scale_y_log10()
 N2Olanduse
 
 #### Soil type ####
+tiff("soiltype_count.tiff", units="in", width=2.5, height=4, res=300)
+soil_count <- ggplot(data = subset(dat, !is.na(Soil_type)), aes(x = Soil_type)) +
+  geom_bar(fill=	"#097969") +   labs(y = "Frequency", x = "Soil type") + theme_minimal() 
+soil_count
+dev.off()
+
 CO2soil <- ggplot(dat, aes(x=Soil_type , y=g_CO2_m2_yr, fill=Soil_type)) +
   geom_boxplot(outlier.shape = NA) +  geom_point(position = position_jitter(width = 0.15), size = 2) + theme_minimal()
 CO2soil
@@ -177,6 +245,12 @@ N2Osoil <- ggplot(dat, aes(x=Soil_type , y=g_N2O_m2_yr, fill=Soil_type)) +
 N2Osoil
 
 #### Hydrological regime ####
+tiff("hydroregime_count.tiff", units="in", width=4, height=4, res=300)
+dry_count <- ggplot(dat, aes(x = Hydrological_regime)) +
+  geom_bar(fill=	"#097969") +   labs(y = "Frequency", x = "Hydrological regime") + theme_minimal() 
+dry_count
+dev.off()
+
 CO2hydro <- ggplot(dat, aes(x=Hydrological_regime , y=g_CO2_m2_yr, fill=Hydrological_regime)) + geom_boxplot(outlier.shape = NA) +  geom_point(position = position_jitter(width = 0.15), size = 2) + theme_minimal()
 CO2hydro
 
@@ -184,6 +258,12 @@ N2Ohydro <- ggplot(dat, aes(x=Hydrological_regime , y=g_N2O_m2_yr, fill=Hydrolog
 N2Ohydro
 
 #### Climate zone ####
+tiff("climate_count.tiff", units="in", width=4, height=4, res=300)
+clim_count <- ggplot(data = subset(dat, !is.na(KGMain_climate_group)), aes(x = KGMain_climate_group)) +
+  geom_bar(fill=	"#097969") +   labs(y = "Frequency", x = "Climate zones") + theme_minimal() 
+clim_count
+dev.off()
+
 CO2KGclimate <- ggplot(dat, aes(x=KGMain_climate_group , y=g_CO2_m2_yr, fill=KGMain_climate_group)) + geom_boxplot(outlier.shape = NA) +  geom_point(position = position_jitter(width = 0.15), size = 2) + theme_minimal()
 CO2KGclimate
 
