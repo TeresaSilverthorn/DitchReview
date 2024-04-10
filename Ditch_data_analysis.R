@@ -25,13 +25,14 @@ setwd("C:/Users/teres/Documents/Ditch lit review/DitchReview/Figures/")
 
 #Load in lit review data from Google Sheet (saved on PC):
 
-dat <- readxl::read_excel("C:/Users/teres/Documents/Ditch lit review/DitchReview/Data/Ditch_data_extraction_2024-04-03.xlsx", sheet="Data_extraction", range = "A1:AL73", na = "NA") # Replace character NAs with actual NAs  # set range if you want to exclude the "Not included" studies
+dat <- readxl::read_excel("C:/Users/teres/Documents/Ditch lit review/DitchReview/Data/Ditch_data_extraction_2024-04-08.xlsx", sheet="Data_extraction", range = "A1:AL80", na = "NA") # Replace character NAs with actual NAs  # set range if you want to exclude the "Not included" studies
 
 dat <- as.data.frame(dat)
 
-str(dat)  #72 obs. of  38 variables
+str(dat)  #80 obs. of  38 variables
 colnames(dat)
-length(unique(dat$Authors)) #48 unique studies
+length(unique(dat$Authors)) #53 unique studies
+#Out of a total of 78 data sets
 
 dat <- dat %>%
   mutate(Soil_type = as.factor(Soil_type))  %>%
@@ -92,7 +93,9 @@ dat <- dat %>%
   mutate(Mean_velocity_m_s = as.numeric(Mean_velocity_m_s))  
 
 
-## Soil type 
+## Soil type
+levels(dat$Soil_type)
+
 dat <- dat %>%
   mutate(Soil_type = case_when(
     grepl("Organic", Soil_type, ignore.case = TRUE) ~ "Organic",
@@ -141,25 +144,13 @@ levels(dat$Land_useCLC)
 
 st(dat, vars = c('Elevation_masl','Mean_width_m', 'Mean_water_depth_m', 'Mean_velocity_m_s',  'DO_mg_L', 'pH', 'EC_us_cm', 'DOC_mg_L', 'TN_mg_L', 'TP_mg_L' ))
 
-summary(dat$Elevation_masl)
-mean(dat$Mean_width_m, na.rm=T)
-sd(dat$Mean_water_depth_m, na.rm=T)
-sd(dat$Mean_velocity_m_s, na.rm=T)
-sd(dat$DO_mg_L, na.rm=T)
-sd(dat$pH, na.rm=T)
-sd(dat$EC_us_cm, na.rm=T)
-max(dat$DOC_mg_L, na.rm=T)
-sd(dat$TN_mg_L, na.rm=T)
 
-sum(!is.na(dat$TN_mg_L))
-
-str(dat)
 #### Plots #####
 
 # Publication year frequency plot
 hist(dat$Publication_year)
 
-tiff("freq_pub_yr.tiff", units="in", width=6.5, height=4, res=300)
+tiff("freq_pub_yr.tiff", units="in", width=7, height=4, res=300)
 
 pub_yr <- ggplot(dat, aes(x = Publication_year)) +
   geom_histogram(binwidth = 1, fill = "#304F3B", color = "black") +
@@ -202,13 +193,31 @@ dev.off()
 
 
 #### GHG data ####
+#### GHG summary statistics ####
+
+st(dat, vars = c("g_CO2_m2_yr",  "g_N2O_m2_yr")) #GHG summary stats
+
+
+# Convert to CO2-C for comparison with inland waters
+x <- mean(dat$g_CO2_m2_yr, na.rm=T)
+y <- sd(dat$g_CO2_m2_yr, na.rm=T)
+
+x/44.01*12.01 # convert to CO2-C
+y/44.01*12.01 # convert to CO2-C
+
+a <-mean(dat$g_N2O_m2_yr, na.rm=T)
+b <-sd(dat$g_N2O_m2_yr, na.rm=T)
+
+a/44.01*28.02 # convert to N2O-N
+b/44.01*28.02 # convert to N2O-N
+
 summary(dat$g_CO2_m2_yr)
 summary(dat$CH4_diffusive_g_CH4_m2_yr)
 summary(dat$CH4_ebullitive_g_CH4_m2_yr)
 summary(dat$g_N2O_m2_yr)
 
 max(dat$g_N2O_m2_yr, na.rm=T)
-
+f
 #### Correlation plot ####
 numeric_dat <- dat[sapply(dat, is.numeric)] # subset numeric data
 
@@ -269,7 +278,9 @@ N2Omethod
 
 #### Trophic status ####
 # Reorder factor levels more logically
-dat$Nutrient_status <- factor(dat$Nutrient_status, levels=c("Mesotrophic", "Eutrophic", "Hypertrophic")) 
+levels(dat$Nutrient_status)
+
+dat$Nutrient_status <- ordered(dat$Nutrient_status, levels = c("Oligotrophic", "Mesotrophic", "Eutrophic", "Hypertrophic"))
 
 
 tiff("troph_count.tiff", units="in", width=4, height=4, res=300)
@@ -278,18 +289,18 @@ geom_bar(fill=	"#097969") +   labs(y = "Frequency", x = "Trophic state") + theme
 troph_count
 dev.off()
 
-tiff("CO2trophic.tiff", units="in", width=6, height=4, res=300)
+tiff("CO2trophic.tiff", units="in", width=7, height=4, res=300)
 
 CO2trophic <- ggplot(dat, aes(x=Nutrient_status , y=g_CO2_m2_yr, fill=Nutrient_status)) + xlab("Nutrient status") +  
-  geom_boxplot(outlier.shape = NA) +  geom_point(position = position_jitter(width = 0.15), size = 2) + theme_minimal() +theme(legend.position="none", axis.title = element_text(size = 16), axis.text = element_text(size = 14, color="black"))  + xlab("Nutrient status") + scale_fill_manual(values=c("#AFBCD3", "#4E745E", "#FFACB7" )) +ylab(expression(g~CO[2]~m^-2*~yr^-1)) 
+  geom_boxplot(outlier.shape = NA) +  geom_point(position = position_jitter(width = 0.15), size = 2) + theme_minimal() +theme(legend.position="none", axis.title = element_text(size = 16), axis.text = element_text(size = 14, color="black"))  + xlab("Nutrient status") + scale_fill_manual(values=c( "#FFD3B5","#AFBCD3", "#4E745E", "#FFACB7" )) +ylab(expression(g~CO[2]~m^-2*~yr^-1)) 
 CO2trophic
 
 dev.off()
 
 
-tiff("N2Otrophic.tiff", units="in", width=6, height=4, res=300)
+tiff("N2Otrophic.tiff", units="in", width=7, height=4, res=300)
 
-N2Otrophic <- ggplot(dat, aes(x=Nutrient_status , y=g_N2O_m2_yr , fill=Nutrient_status)) +   geom_boxplot(outlier.shape = NA) +  geom_point(position = position_jitter(width = 0.15), size = 2) + theme_minimal()  + theme(legend.position="none", axis.title = element_text(size = 16), axis.text = element_text(size = 14, color="black")) + scale_fill_manual(values=c("#AFBCD3", "#4E745E", "#FFACB7" )) + xlab("Nutrient status") + theme(legend.position="none") + ylab(expression(g~N[2]*`O`~m^-2~yr^-1)) +  scale_y_continuous(trans='log2', labels = scales::number_format(accuracy = 0.01))
+N2Otrophic <- ggplot(dat, aes(x=Nutrient_status , y=g_N2O_m2_yr , fill=Nutrient_status)) +   geom_boxplot(outlier.shape = NA) +  geom_point(position = position_jitter(width = 0.15), size = 2) + theme_minimal()  + theme(legend.position="none", axis.title = element_text(size = 16), axis.text = element_text(size = 14, color="black")) + scale_fill_manual(values=c("#FFD3B5","#AFBCD3", "#4E745E", "#FFACB7")) + xlab("Nutrient status") + theme(legend.position="none") + ylab(expression(g~N[2]*`O`~m^-2~yr^-1)) +  scale_y_continuous(trans='log2', labels = scales::number_format(accuracy = 0.01))
 N2Otrophic
 
 dev.off()
@@ -318,9 +329,6 @@ N2Olanduse
 dev.off()
 
 
-
-
-theme(legend.position="none", axis.title = element_text(size = 16), axis.text = element_text(size = 14, color="black"))  + xlab("Köppen Geiger climate zone") + ylab(expression(g~N[2]*`O`~m^-2~yr^-1))+   scale_fill_manual(values = c("Tropical" = "#4E745E", "Temperate" = "#FFACB7",   "Arid" = "#FFD3B5",  "Continental" = "#AFBCD3"))  + scale_y_continuous(trans='log2', labels = scales::number_format(accuracy = 0.01))
 
 #### Soil type ####
 tiff("soiltype_count.tiff", units="in", width=2.5, height=4, res=300)
@@ -369,7 +377,7 @@ dev.off()
 
 tiff("CO2KGclimate.tiff", units="in", width=6, height=4, res=300)
 
-CO2KGclimate <- ggplot(data = subset(dat, !is.na(KGMain_climate_group)), aes(x=reorder(KGMain_climate_group, g_CO2_m2_yr, na.rm=T) , y=g_CO2_m2_yr, fill=KGMain_climate_group)) + geom_boxplot(outlier.shape = NA) +  geom_point(position = position_jitter(width = 0.15), size = 2) + theme_minimal() +  theme(legend.position="none", axis.title = element_text(size = 16), axis.text = element_text(size = 14, color="black"))  + xlab("Köppen Geiger climate zone") + scale_fill_manual(values=c("#AFBCD3", "#FFACB7" ,"#4E745E" , "#FFD3B5"  )) +ylab(expression(g~CO[2]~m^-2*~yr^-1)) 
+CO2KGclimate <- ggplot(data = subset(dat, !is.na(KGMain_climate_group)), aes(x=reorder(KGMain_climate_group, g_CO2_m2_yr, na.rm=T) , y=g_CO2_m2_yr, fill=KGMain_climate_group)) + geom_boxplot(outlier.shape = NA) +  geom_point(position = position_jitter(width = 0.15), size = 2) + theme_minimal() +  theme(legend.position="none", axis.title = element_text(size = 16), axis.text = element_text(size = 14, color="black"))  + xlab("Köppen Geiger climate zone") +  scale_fill_manual(values = c("Tropical" = "#4E745E", "Temperate" = "#FFACB7",   "Arid" = "#FFD3B5",  "Continental" = "#AFBCD3")) +ylab(expression(g~CO[2]~m^-2*~yr^-1)) 
 CO2KGclimate   
 
 dev.off()
@@ -519,26 +527,30 @@ kruskal.test(g_CO2_m2_yr ~ Soil_type, data = subset(dat, !is.na(Soil_type)) ) # 
 
 kruskal.test(g_CO2_m2_yr ~ Nutrient_status, data = subset(dat, !is.na(Nutrient_status)) ) # no sig diff
 
-kruskal.test(g_CO2_m2_yr ~ Land_useCLC, data = subset(dat, !is.na(Land_useCLC)) ) # p = 0.04
+kruskal.test(g_CO2_m2_yr ~ Land_useCLC, data = subset(dat, !is.na(Land_useCLC)) ) # p = 0.07
 
-kruskal.test(g_CO2_m2_yr ~ KGMain_climate_group, data = subset(dat, !is.na(KGMain_climate_group)) ) # p = 0.04
+kruskal.test(g_CO2_m2_yr ~ KGMain_climate_group, data = subset(dat, !is.na(KGMain_climate_group)) ) # p = 0.02
 
 kruskal.test(g_CO2_m2_yr ~ Hydrological_regime, data = subset(dat, !is.na(Hydrological_regime)) ) #no sig diff
 
 #check for the pairwise differences
-pairwise.wilcox.test(dat$g_CO2_m2_yr[!is.na(dat$KGMain_climate_group)], dat$KGMain_climate_group[!is.na(dat$KGMain_climate_group)], p.adjust.method = "BH")
+pairwise.wilcox.test(dat$g_CO2_m2_yr[!is.na(dat$KGMain_climate_group) & dat$KGMain_climate_group != "Arid"], dat$KGMain_climate_group[!is.na(dat$KGMain_climate_group) & dat$KGMain_climate_group != "Arid"], p.adjust.method = "BH") # no sig diff
 
-pairwise.wilcox.test(dat$g_CO2_m2_yr[!is.na(dat$Land_useCLC)], dat$Land_useCLC[!is.na(dat$Land_useCLC)], p.adjust.method = "BH") # Urban and agriculture are different
+pairwise.wilcox.test(dat$g_CO2_m2_yr[!is.na(dat$KGMain_climate_group)], dat$KGMain_climate_group[!is.na(dat$KGMain_climate_group)], p.adjust.method = "BH") #no sig diff
+
+pairwise.wilcox.test(dat$g_CO2_m2_yr[!is.na(dat$Land_useCLC)], dat$Land_useCLC[!is.na(dat$Land_useCLC)], p.adjust.method = "BH") # no sig diff
+
+pairwise.wilcox.test(dat$g_CO2_m2_yr[!is.na(dat$Nutrient_status)], dat$Nutrient_status[!is.na(dat$Nutrient_status)], p.adjust.method = "BH") # no sig diff
 
 
 #### Kruskal wallis N2O ####
 kruskal.test(g_N2O_m2_yr ~ Soil_type, data = subset(dat, !is.na(Soil_type)) ) # no sig diff
 
-kruskal.test(g_N2O_m2_yr ~ Nutrient_status, data = subset(dat, !is.na(Nutrient_status)) ) # p = 0.002
+kruskal.test(g_N2O_m2_yr ~ Nutrient_status, data = subset(dat, !is.na(Nutrient_status)) ) # 0.05
 
-kruskal.test(g_N2O_m2_yr ~ Land_useCLC, data = subset(dat, !is.na(Land_useCLC)) ) # no sig diff
+kruskal.test(g_N2O_m2_yr ~ Land_useCLC, data = subset(dat, !is.na(Land_useCLC)) ) # p = 0.26
 
-kruskal.test(g_N2O_m2_yr ~ KGMain_climate_group, data = subset(dat, !is.na(KGMain_climate_group)) ) # p = 0.002
+kruskal.test(g_N2O_m2_yr ~ KGMain_climate_group, data = subset(dat, !is.na(KGMain_climate_group)) ) # p = 0.005
 
 kruskal.test(g_N2O_m2_yr ~ Hydrological_regime, data = subset(dat, !is.na(Hydrological_regime)) ) #no sig diff
 
@@ -547,7 +559,7 @@ pairwise.wilcox.test(dat$g_N2O_m2_yr[!is.na(dat$Nutrient_status)], dat$Nutrient_
 
 pairwise.wilcox.test(dat$g_N2O_m2_yr[!is.na(dat$Land_useCLC)], dat$Land_useCLC[!is.na(dat$Land_useCLC)], p.adjust.method = "BH")  # no sig diff
 
-pairwise.wilcox.test(dat$g_N2O_m2_yr[!is.na(dat$KGMain_climate_group)], dat$KGMain_climate_group[!is.na(dat$KGMain_climate_group)], p.adjust.method = "BH")
+pairwise.wilcox.test(dat$g_N2O_m2_yr[!is.na(dat$KGMain_climate_group)], dat$KGMain_climate_group[!is.na(dat$KGMain_climate_group)], p.adjust.method = "BH") # temperate and continental 0.0013
 
 #######################################
 
@@ -555,34 +567,24 @@ pairwise.wilcox.test(dat$g_N2O_m2_yr[!is.na(dat$KGMain_climate_group)], dat$KGMa
 
 #Calculate CO2e of N2O
 #the GWP of N2O is 273 over a 100 yr horizon (IPCC, 2021)
-dat$N2O_CO2e <- (dat$g_N2O_m2_yr*273)
+dat$N2O_CO2e <- (dat$g_N2O_m2_yr*270)  # GWP is 273
 
 #Calculate CO2e of CH4
 #the GWP of methane is 27 over a 100 yr horizon (IPCC, 2021)
-dat$CH4_CO2e <- (dat$CH4_diffusive_g_CH4_m2_yr + dat$CH4_ebullitive_g_CH4_m2_yr)*27
+dat$CH4_CO2e <- (dat$CH4_diffusive_g_CH4_m2_yr + dat$CH4_ebullitive_g_CH4_m2_yr)*45 #GWP is 27
 
-dat$CH4_CO2e <- rowSums(cbind(dat$CH4_diffusive_g_CH4_m2_yr, dat$CH4_ebullitive_g_CH4_m2_yr), na.rm = TRUE) * 27
+dat$CH4_CO2e <- rowSums(cbind(dat$CH4_diffusive_g_CH4_m2_yr, dat$CH4_ebullitive_g_CH4_m2_yr), na.rm = TRUE) * 45  # GWP is 27
 
 dat$CH4_CO2e[dat$CH4_CO2e == 0] <- NA
 
 
-#Plot the proportion of each gas 
+#Proportion of each gas 
 mean(dat$N2O_CO2e, na.rm=T)
 sd(dat$N2O_CO2e, na.rm=T)
 
 mean(dat$CH4_CO2e, na.rm=T)
 sd(dat$CH4_CO2e, na.rm=T)
 
-# Convert to CO2-C for comparison with inland waters
-x <- mean(dat$g_CO2_m2_yr, na.rm=T)
-y <- sd(dat$g_CO2_m2_yr, na.rm=T)
-
-y/44.01*12.01 # convert to CO2-C
-
-a <-mean(dat$g_N2O_m2_yr, na.rm=T)
-b <-sd(dat$g_N2O_m2_yr, na.rm=T)
-
-b/44.01*14.01 # convert to N2O-N
 
 sum(!is.na(dat$g_CO2_m2_yr)) # counts
 
@@ -608,3 +610,7 @@ sd(subset_CO2eq$N2O_CO2e, na.rm=T)
 b <- mean(subset_CO2eq$N2O_CO2e, na.rm=T) + mean(subset_CO2eq$CH4_CO2e, na.rm=T) + mean(subset_CO2eq$g_CO2_m2_yr, na.rm=T)
 
 mean(subset_CO2eq$N2O_CO2e, na.rm=T)/b*100
+
+mean(subset_CO2eq$CH4_CO2e, na.rm=T)/b*100
+
+mean(subset_CO2eq$g_CO2_m2_yr, na.rm=T)/b*100
