@@ -19,43 +19,51 @@ library(sf)
 library(rnaturalearthdata)
 library(rnaturalearth)
 library(vtable)
+library(janitor)
 
 # Set working directory for figures
 setwd("C:/Users/teres/Documents/Ditch lit review/DitchReview/Figures/")
 
 #Load in lit review data from Google Sheet (saved on PC):
 
-dat <- readxl::read_excel("C:/Users/teres/Documents/Ditch lit review/DitchReview/Data/Ditch_data_extraction_2024-04-08.xlsx", sheet="Data_extraction", range = "A1:AL80", na = "NA") # Replace character NAs with actual NAs  # set range if you want to exclude the "Not included" studies
+dat <- readxl::read_excel("C:/Users/teres/Documents/Ditch lit review/DitchReview/Data/Ditch_data_extraction_2024-05-10.xlsx", sheet="Data_extraction", range = "A1:AO112", na = "NA") # Replace character NAs with actual NAs  # set range if you want to exclude the "Not included" studies
 
 dat <- as.data.frame(dat)
 
-str(dat)  #80 obs. of  38 variables
+str(dat)  #111 obs. of  41 variables
 colnames(dat)
-length(unique(dat$Authors)) #53 unique studies
-#Out of a total of 78 data sets
+dat <- clean_names(dat)  #clean names: no capitals, only _
+colnames(dat)
 
-dat <- dat %>%
-  mutate(Soil_type = as.factor(Soil_type))  %>%
-  mutate(Country = as.factor(Country)) %>%
-  mutate(Climate_zone = as.factor(Climate_zone))  %>%
-  mutate(Land_use = as.factor(Land_use))  %>%
-  mutate(Hydrological_regime = as.factor(Hydrological_regime)) %>%
-  mutate(Nutrient_status = as.factor(Nutrient_status)) %>%
-  mutate(GHG_sampling_method = as.factor(GHG_sampling_method))
+length(unique(dat$authors)) #76 unique studies
+
 
 # Rename columns
 
-colnames(dat)[colnames(dat) == "g_CO2_m-2_yr-1"] <- "g_CO2_m2_yr"
-colnames(dat)[colnames(dat) == "CH4_diffusive_g_CH4_m-2_yr-1"] <- "CH4_diffusive_g_CH4_m2_yr"
-colnames(dat)[colnames(dat) == "CH4_ebullitive_g_CH4_m-2_yr-1"] <- "CH4_ebullitive_g_CH4_m2_yr"
-colnames(dat)[colnames(dat) == "g_N2O_m-2_yr-1"] <- "g_N2O_m2_yr"
-colnames(dat)[colnames(dat) == "DO_mg_L-1"] <- "DO_mg_L"
-colnames(dat)[colnames(dat) == "EC_us_cm-1"] <- "EC_us_cm"
-colnames(dat)[colnames(dat) == "DOC_mg_L-1"] <- "DOC_mg_L"
-colnames(dat)[colnames(dat) == "TP_mg_L-1"] <- "TP_mg_L"
-colnames(dat)[colnames(dat) == "TN_mg_L-1"] <- "TN_mg_L"
-colnames(dat)[colnames(dat) == "Chl-a_mg_L-1"] <- "Chl-a_mg_L"
-colnames(dat)[colnames(dat) == "Mean_velocity_m_s-1"] <- "Mean_velocity_m_s"
+colnames(dat)[colnames(dat) == "p_h"] <- "pH"
+colnames(dat)[colnames(dat) == "mean_velocity_m_s_1"] <- "mean_velocity_m_s"
+colnames(dat)[colnames(dat) == "g_co2_m_2_yr_1"] <- "g_co2_m_2_yr"
+colnames(dat)[colnames(dat) == "ch4_diffusive_g_ch4_m_2_yr_1"] <- "ch4_diff_g_ch4_m_2_yr"
+colnames(dat)[colnames(dat) == "ch4_ebullitive_g_ch4_m_2_yr_1"] <- "ch4_ebull_g_ch4_m_2_yr"
+colnames(dat)[colnames(dat) == "g_n2o_m_2_yr_1"] <- "g_n2o_m_2_yr"
+colnames(dat)[colnames(dat) == "do_mg_l_1"] <- "do_mg_l"
+colnames(dat)[colnames(dat) == "ec_us_cm_1"] <- "ec_us_cm"
+colnames(dat)[colnames(dat) == "doc_mg_l_1"] <- "doc_mg_l"
+colnames(dat)[colnames(dat) == "tp_mg_l_1"] <- "tp_mg_l"
+colnames(dat)[colnames(dat) == "tn_mg_l_1"] <- "tn_mg_l"
+colnames(dat)[colnames(dat) == "chl_a_mg_l_1"] <- "chl_a_mg_l"
+
+
+#Make columns factors
+dat <- dat %>%
+  mutate(soil_type = as.factor(soil_type))  %>%
+  mutate(country = as.factor(country)) %>%
+  mutate(climate_zone = as.factor(climate_zone))  %>%
+  mutate(land_use = as.factor(land_use))  %>%
+  mutate(hydrological_regime = as.factor(hydrological_regime)) %>%
+  mutate(nutrient_status = as.factor(nutrient_status)) %>%
+  mutate(ghg_sampling_method = as.factor(ghg_sampling_method))
+
 
 
 
