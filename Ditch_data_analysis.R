@@ -237,7 +237,18 @@ dat$depth_width <-  dat$mean_water_depth_m / dat$mean_width_m
 
 dat$nitrateN_mg_l <- dat$nitrate_mg_l/62.0049*14.0067
 
+#### Add a new column for elemental ratios: C:N and N:P
+
+dat$CN <- dat$doc_mg_l/1000/12.011 / dat$tn_mg_l/1000/14.01 #15 obs
+
+dat$CN2 <- dat$doc_mg_l/1000/12.011 / dat$nitrateN_mg_l/1000/14.01  #22 obs
+
+dat$NP <-  dat$nitrateN_mg_l/1000/14.01  / dat$tp_mg_l/1000/30.97 # only 3 obs
+
 ###### Function for plotting log transformed negative and positive values from Philip Keller ####
+
+#   scale_y_continuous(trans = "sign", breaks = c(-10,1,10,100,1000,10000), labels = c("-10","1", "10", "100", "1,000", "10,000"))
+
 
 sign_breaks <- function(n = 5, base = 10){
   rng <- log(range(n, na.rm = TRUE), base = base)
@@ -378,7 +389,7 @@ numeric_dat <- numeric_dat %>%
 
 colnames(numeric_dat)
 
-colnames(numeric_dat) <- c("lat", "lon", "masl",  "temp", "precip", "width", "depth", "veloc", "discharge", "CO2", "CH4_diff", "CH4_ebull",  "N2O", "DO",  "pH", "EC", "DOC", "TP", "TN", "chl-a", "depth_width", "NO3-N")
+colnames(numeric_dat) <- c("lat", "lon", "masl",  "temp", "precip", "width", "depth", "veloc", "discharge", "CO2", "CH4_diff", "CH4_ebull",  "N2O", "DO",  "pH", "EC", "DOC", "TP", "TN", "chl-a", "depth_width", "NO3-N", "CN", "CN2", "NP")
 
 numeric_dat <- numeric_dat %>%
   select(CO2, N2O, CH4_diff, CH4_ebull,  everything()) # reorder to put GHGs in first spots
@@ -448,10 +459,10 @@ dev.off()
 citation("lme4")
 
 #### Sampling method ####
-CO2method <- ggplot(dat, aes(x=ghg_sampling_method , y=g_co2_m_2_yr, fill=ghg_sampling_method) )+   geom_boxplot(outlier.shape = NA) +  geom_point(position = position_jitter(width = 0.15), size = 2) + theme_minimal()
+CO2method <- ggplot(subset(dat, ghg_sampling_method!="Both"), aes(x=ghg_sampling_method , y=g_co2_m_2_yr, fill=ghg_sampling_method) )+   geom_boxplot(outlier.shape = NA) +  geom_point(position = position_jitter(width = 0.15), size = 2.5, alpha=0.5) + theme_minimal() +  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),legend.position="none", axis.title = element_text(size = 12), axis.text = element_text(size = 12, color="black")) + scale_fill_manual(values=c("Concentration" = "#4780B3", "Chamber" = "#FF97B5")) + ylab(expression(g~CO[2]~m^-2*~yr^-1)) + xlab("GHG sampling method") +    scale_y_continuous(trans = "sign", breaks = c(-10,1,10,100,1000,10000), labels = c("-10","1", "10", "100", "1,000", "10,000"))
 CO2method
 
-N2Omethod <- ggplot(dat, aes(x=ghg_sampling_method , y=g_n2o_m_2_yr, fill=ghg_sampling_method) )+   geom_boxplot(outlier.shape = NA) +  geom_point(position = position_jitter(width = 0.15), size = 2) + theme_minimal() + scale_y_log10()
+N2Omethod <- ggplot(subset(dat, ghg_sampling_method!="Both"), aes(x=ghg_sampling_method , y=g_n2o_m_2_yr, fill=ghg_sampling_method) )+   geom_boxplot(outlier.shape = NA) +  geom_point(position = position_jitter(width = 0.15), size = 2.5, alpha=0.5) + theme_minimal() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),legend.position="none", axis.title = element_text(size = 12), axis.text = element_text(size = 12, color="black")) +  scale_fill_manual(values=c("Concentration" = "#4780B3", "Chamber" = "#FF97B5")) +  xlab("GHG sampling method") + ylab(expression(g~N[2]*`O`~m^-2~yr^-1)) + scale_y_continuous(trans = 'pseudo_log') 
 N2Omethod
 
 #### Trophic status ####
@@ -504,15 +515,14 @@ dev.off()
 tiff("CO2landuse.tiff", units="in", width=6, height=4, res=300)
 
 CO2landuse <- ggplot(data = subset(dat, !is.na(land_use_clc)), aes(x=reorder(land_use_clc, g_co2_m_2_yr, na.rm=T) , y=g_co2_m_2_yr, fill=land_use_clc)) + xlab("Land use") +
-  geom_boxplot(outlier.shape = NA) +  geom_point(position = position_jitter(width = 0.15), size = 2) + theme_minimal() +theme(legend.position="none", axis.title = element_text(size = 16), axis.text = element_text(size = 14, color="black"))  + xlab("Land use") + scale_fill_manual(values=c( "#FFD3B5", "#4E745E", "#FFACB7" , "#AFBCD3")) +ylab(expression(g~CO[2]~m^-2*~yr^-1)) + scale_x_discrete(labels = c('Urban','Natural/Forest','Agriculture', 'Wetland'))
+  geom_boxplot(outlier.shape = NA) +  geom_point(position = position_jitter(width = 0.15), size = 2.5, alpha=0.5) + theme_minimal() +theme(panel.grid.major = element_blank(),  panel.grid.minor = element_blank(), legend.position="none", axis.title = element_text(size = 12), axis.text = element_text(size = 12, color="black"))  + xlab("Land use") + scale_fill_manual(values=c("Natural_Forest" = "#FFD3B5", "Wetland" = "#4E745E", "Agriculture" = "#FFACB7" , "Urban" = "#AFBCD3")) +ylab(expression(g~CO[2]~m^-2*~yr^-1))  + scale_x_discrete(labels = c('Wetland', 'Agriculture', 'Urban' , 'Natural/Forest')) +  scale_y_continuous(trans = "sign", breaks = c(-10,1,10,100,1000,10000), labels = c("-10","1", "10", "100", "1,000", "10,000"))
 CO2landuse
 
 dev.off()
 
 tiff("N2Olanduse.tiff", units="in", width=6, height=4, res=300)
 
-N2Olanduse <- ggplot(data = subset(dat, !is.na(land_use_clc)), aes(x=reorder(land_use_clc, g_n2o_m_2_yr, na.rm=T)  , y=g_n2o_m_2_yr, fill=land_use_clc)) + xlab("Land use") +
-  geom_boxplot(outlier.shape = NA) +  geom_point(position = position_jitter(width = 0.15), size = 2) + theme_minimal() + theme(legend.position="none", axis.title = element_text(size = 16), axis.text = element_text(size = 14, color="black"))  + scale_fill_manual(values=c("#FFD3B5", "#4E745E", "#FFACB7" , "#AFBCD3")) + scale_x_discrete(labels = c('Natural/Forest', 'Urban', 'Wetland', 'Agriculture')) + ylab(expression(g~N[2]*`O`~m^-2~yr^-1)) #+  scale_y_continuous(trans='log2', labels = scales::number_format(accuracy = 0.01))
+N2Olanduse <- ggplot(data = subset(dat, !is.na(land_use_clc)), aes(x=reorder(land_use_clc, g_n2o_m_2_yr, na.rm=T)  , y=g_n2o_m_2_yr, fill=land_use_clc)) + xlab("Land use") +   geom_boxplot(outlier.shape = NA) +  geom_point(position = position_jitter(width = 0.15), size = 2.5, alpha=0.5) + theme_minimal() + theme(panel.grid.major = element_blank(),  panel.grid.minor = element_blank(), legend.position="none", axis.title = element_text(size = 12), axis.text = element_text(size = 12, color="black"))  + scale_fill_manual(values=c("Natural_Forest" = "#FFD3B5", "Wetland" = "#4E745E", "Agriculture" = "#FFACB7" , "Urban" = "#AFBCD3")) + scale_x_discrete(labels = c( 'Urban', 'Wetland', 'Natural/Forest', 'Agriculture'))  + ylab(expression(g~N[2]*`O`~m^-2~yr^-1)) + scale_y_continuous(trans = 'pseudo_log') 
 N2Olanduse
 
 dev.off()
@@ -639,13 +649,22 @@ N2Oclimate
 
 #### Vegetation presence / absence ####
 
-CO2veg <- ggplot(subset(dat, complete.cases(instream_vegetation)), aes(x=instream_vegetation, y=g_co2_m_2_yr, fill=instream_vegetation)) + geom_boxplot(outlier.shape = NA) +  geom_point(position = position_jitter(width = 0.15), size = 2) + theme_minimal()
+CO2veg <- ggplot(subset(dat, complete.cases(instream_vegetation)), aes(x=instream_vegetation, y=g_co2_m_2_yr, fill=instream_vegetation)) + geom_boxplot(outlier.shape = NA) +  geom_point(position = position_jitter(width = 0.15), size = 2.5, alpha=0.5) + theme_minimal() +  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),legend.position="none", axis.title = element_text(size = 12), axis.text = element_text(size = 12, color="black")) + scale_fill_manual(values = c("Yes" = "#AAD487", "No" = "#4780B3")) + xlab("Instream vegetation") + ylab(expression(g~CO[2]~m^-2*~yr^-1)) +  scale_y_continuous(trans = "sign", breaks = c(-10,1,10,100,1000,10000), labels = c("-10","1", "10", "100", "1,000", "10,000"))
 CO2veg
 
-N2Oveg <- ggplot(subset(dat, complete.cases(instream_vegetation)), aes(x=instream_vegetation, y=g_n2o_m_2_yr, fill=instream_vegetation)) + geom_boxplot(outlier.shape = NA) +  geom_point(position = position_jitter(width = 0.15), size = 2) + theme_minimal()
+N2Oveg <- ggplot(subset(dat, complete.cases(instream_vegetation)), aes(x=instream_vegetation, y=g_n2o_m_2_yr, fill=instream_vegetation)) + geom_boxplot(outlier.shape = NA) +  geom_point(position = position_jitter(width = 0.15), size = 2.5, alpha=0.5) + theme_minimal() +  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),legend.position="none", axis.title = element_text(size = 12), axis.text = element_text(size = 12, color="black")) + scale_fill_manual(values = c("Yes" = "#AAD487", "No" = "#4780B3")) + ylab(expression(g~N[2]*`O`~m^-2~yr^-1)) + scale_y_continuous(trans = 'pseudo_log') +  xlab("Instream vegetation")
 N2Oveg
 
 
+#### Combine data for supplementary information ####
+
+tiff("combined", units="in", width=10, height=8, res=300)
+
+combine <- ggarrange(CO2method, N2Omethod,  CO2landuse, N2Olanduse, CO2veg, N2Oveg,
+                      ncol = 2, nrow = 3, align="hv",common.legend = F, labels = c("(a)", "(b)", "(c)", "(d)", "(e)", "(f)"))
+combine
+
+dev.off()
 
 #### Effects of climate variables ####
 tiff("CO2temp.tiff", units="in", width=6, height=4, res=300)
@@ -656,7 +675,7 @@ dev.off()
 #by climate zone
 tiff("CO2temp.tiff", units="in", width=7, height=4, res=300)
 
-CO2temp <- ggplot(dat, aes(x=ma_temp_c , y=g_co2_m_2_yr)) + geom_point(aes(colour=kg_main_climate_group), size = 2.5, alpha=0.7) + theme_minimal() +xlab(expression(paste("Mean annual temperature (", degree, "C)", sep = ""))) +     scale_colour_manual(values = c("Tropical" = "#AAD487", "Temperate" = "#FF97B5",  "Arid" = "#FFD766","Continental" = "#4780B3")) +  theme(legend.title=element_blank(), axis.title = element_text(size = 16), legend.text = element_text(size = 14), axis.text = element_text(size = 16, color="black"))  + xlab(expression(paste("Mean annual temperature (", degree, "C)", sep = ""))) + ylab(expression(g~CO[2]~m^-2*~yr^-1)) 
+CO2temp <- ggplot(dat, aes(x=ma_temp_c , y=g_co2_m_2_yr)) + geom_point(aes(colour=kg_main_climate_group), size = 2.5, alpha=0.7) + theme_minimal() +xlab(expression(paste("Mean annual temperature (", degree, "C)", sep = ""))) +     scale_colour_manual(values = c("Tropical" = "#AAD487", "Temperate" = "#FF97B5",  "Arid" = "#FFD766","Continental" = "#4780B3")) +  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.title=element_blank(), axis.title = element_text(size = 12), legend.text = element_text(size = 12), axis.text = element_text(size = 12, color="black"))  + xlab(expression(paste("Mean annual temperature (", degree, "C)", sep = ""))) + ylab(expression(g~CO[2]~m^-2*~yr^-1)) 
 CO2temp
 
 dev.off()
@@ -683,7 +702,7 @@ dev.off()
 
 tiff("N2Otemp", units="in", width=7, height=4, res=300)
 
-N2Otemp <- ggplot(dat, aes(x=ma_temp_c , y=g_n2o_m_2_yr)) + geom_point( aes(color=kg_main_climate_group), size = 2.5, alpha=0.7) + theme_minimal() + theme(legend.title=element_blank(), legend.text = element_text(size = 14), axis.title = element_text(size = 16), axis.text = element_text(size = 14, color="black")) +     scale_colour_manual(values = c("Tropical" = "#AAD487", "Temperate" = "#FF97B5",  "Arid" = "#FFD766","Continental" = "#4780B3"))  + ylab(expression(g~N[2]*`O`~m^-2~yr^-1)) + xlab(expression(paste("Mean annual temperature (", degree, "C)", sep = "")))
+N2Otemp <- ggplot(dat, aes(x=ma_temp_c , y=g_n2o_m_2_yr)) + geom_point( aes(color=kg_main_climate_group), size = 2.5, alpha=0.7) + theme_minimal() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),legend.title=element_blank(), legend.text = element_text(size = 12), axis.title = element_text(size = 12), axis.text = element_text(size = 12, color="black")) +     scale_colour_manual(values = c("Tropical" = "#AAD487", "Temperate" = "#FF97B5",  "Arid" = "#FFD766","Continental" = "#4780B3"))  + ylab(expression(g~N[2]*`O`~m^-2~yr^-1)) + xlab(expression(paste("Mean annual temperature (", degree, "C)", sep = "")))
 N2Otemp
 
 dev.off()
@@ -692,6 +711,20 @@ tiff("N2Oprecip", units="in", width=7, height=4, res=300)
 N2Oprecip <- ggplot(dat, aes(x=ma_precip_mm , y=g_n2o_m_2_yr)) + geom_point(size = 2.5, alpha=0.5) + theme_minimal() + theme(legend.title=element_blank(), legend.text = element_text(size = 14), axis.title = element_text(size = 16), axis.text = element_text(size = 14, color="black")) 
 N2Oprecip
 dev.off()
+
+
+#### combine CO2 and N2O  MAT ####
+
+tiff("MAT_combined", units="in", width=6.5, height=3, res=300)
+
+MAT_combined <- ggarrange(CO2temp, N2Otemp,  
+                     ncol = 2, nrow = 1, align="hv",common.legend = T, labels = c("(a)", "(b)"))
+MAT_combined
+
+dev.off()
+
+
+
 
 #### GHG and elevation ####
 CO2elev <- ggplot(dat, aes(x=elevation_masl , y=g_co2_m_2_yr)) + geom_point(size = 2) + theme_minimal()
@@ -807,6 +840,12 @@ N2OTN
 
 dev.off()
 
+N2OCN <- ggplot(subset(dat, complete.cases(nutrient_status)), aes(x=CN , y=g_n2o_m_2_yr)) + geom_point(colour="black", size = 2.5, alpha=0.5) + theme_minimal() + ylab(expression(g~N[2]*`O`~m^-2~yr^-1)) +  theme(legend.title=element_blank(), legend.text = element_text(size = 14), axis.title = element_text(size = 16), axis.text = element_text(size = 14, color="black")) +   scale_x_log10()  
+N2OCN
+
+N2OCN2 <- ggplot(subset(dat, complete.cases(nutrient_status)), aes(x=CN2 , y=g_n2o_m_2_yr)) + geom_point(colour="black", size = 2.5, alpha=0.5) + theme_minimal() + ylab(expression(g~N[2]*`O`~m^-2~yr^-1)) +  theme(legend.title=element_blank(), legend.text = element_text(size = 14), axis.title = element_text(size = 16), axis.text = element_text(size = 14, color="black")) +   scale_x_log10()  
+N2OCN2
+
 
 
 tiff("N2ONO3.tiff", units="in", width=6, height=4, res=300)
@@ -856,21 +895,43 @@ CO2_CH4
 #######Combine significant environmental variables ####
 # those with a significant Spearman correlation <.4 (moderately correlated) and <.7 (strongly correlated)
 
+CO2DO <- ggplot(dat, aes(x=do_mg_l , y=g_co2_m_2_yr)) + geom_point( size = 2.5, alpha=0.5, colour="red") + theme_minimal() +  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.title=element_blank(), plot.background = element_rect(colour = "black", fill = NA, size = 1), legend.text = element_text(size = 12), axis.title = element_text(size = 12), axis.text = element_text(size = 10, color="black")) + xlab(expression(DO~(mg~L^`-1`))) + ylab(expression(g~CO[2]~m^`-2`*~yr^`-1`)) + stat_cor(method="spearman", label.sep = "\n", label.x = 8, label.y = 16500)
+CO2DO
 
-tiff("CO2_env_vars", units="in", width=7, height=5, res=300)
+CO2_N2O <- ggplot(dat, aes(y=g_co2_m_2_yr, x=g_n2o_m_2_yr)) + geom_point( size = 2.5, alpha=0.5, colour="black") + theme_minimal() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),legend.title=element_blank(), plot.background = element_rect(colour = "black", fill = NA, size = 1), legend.text = element_text(size = 12), axis.title = element_text(size = 12), axis.text = element_text(size = 10, color="black")) +  xlab(expression(g~N[2]*`O`~m^`-2`~yr^`-1`)) + ylab(expression(g~CO[2]~m^`-2`*~yr^`-1`)) + stat_cor(method="spearman", label.sep = "\n", label.x = 7, label.y = 16500)
+CO2_N2O
 
-CO2_env_vars <- ggarrange(CO2DO, CO2_N2O, CO2veloc, CO2pH,  CO2TP, 
-                                  ncol = 3, nrow = 2, align="hv",common.legend = T,legend="top",  labels = c("(a)", "(b)", "(c)", "(d)", "(e)"))
-CO2_env_vars
+CO2veloc <- ggplot(dat, aes(x=mean_velocity_m_s , y=g_co2_m_2_yr)) + geom_point(size = 2.5, alpha=0.5, colour="red") + theme_minimal() +  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),legend.title=element_blank(), plot.background = element_rect(colour = "black", fill = NA, size = 1), legend.text = element_text(size = 12), axis.title = element_text(size = 12), axis.text = element_text(size = 10, color="black")) + xlab(expression(Velocity~ (m ~s^`-1`) )) + ylab(expression(g~CO[2]~m^`-2`*~yr^`-1`)) + stat_cor(method="spearman", label.sep = "\n",  label.x = 0.65, label.y = 16550)
+CO2veloc
+
+CO2pH <- ggplot(dat, aes(x=pH , y=g_co2_m_2_yr)) + geom_point(size = 2.5, alpha=0.5, colour="red") + theme_minimal() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(),legend.title=element_blank(), plot.background = element_rect(colour = "black", fill = NA, size = 1), legend.text = element_text(size = 12), axis.title = element_text(size = 12), axis.text = element_text(size = 10, color="black")) + ylab(expression(g~CO[2]~m^`-2`*~yr^`-1`)) + stat_cor(method="spearman", label.sep = "\n",  label.x = 0.5, label.y = 16500)
+CO2pH
+
+CO2TP <- ggplot(subset(dat, complete.cases(tp_mg_l)), aes(x=tp_mg_l , y=g_co2_m_2_yr)) + geom_point(size = 2.5, alpha=0.5, colour="red") + theme_minimal() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), plot.background = element_rect(colour = "black", fill = NA, size = 1), legend.title=element_blank(), legend.text = element_text(size = 12), axis.title = element_text(size = 12), axis.text = element_text(size = 10, color="black")) + xlab(expression(TP~ (mg ~L^`-1`))) + ylab(expression(g~CO[2]~m^`-2`*~yr^`-1`)) + stat_cor(method="spearman", label.sep = "\n",  label.x = 1.3, label.y = 4000)
+CO2TP
+
+N2O_CH4 <- ggplot(dat, aes(x=ch4_diff_g_ch4_m_2_yr , y=g_n2o_m_2_yr)) + geom_point( size = 2.5, alpha=0.5, colour="#E1C16E") + theme_minimal() + theme_minimal() + theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), plot.background = element_rect(colour = "black", fill = NA, size = 1), legend.title=element_blank(), legend.text = element_text(size = 12), axis.title = element_text(size = 12), axis.text = element_text(size = 10, color="black")) +  ylab(expression(g~N[2]*`O`~m^`-2`~yr^`-1`))  +xlab(expression(g~CH[4]~m^`-2`~yr^`-1`)) + xlim(-0.05, 800) + stat_cor(method="spearman", label.sep = "\n", label.x = 525, label.y = 9)
+N2O_CH4 # note one outlying value of CH4 (vinasse) was removed for plotting
+
+N2Oveloc <- ggplot(dat, aes(x=mean_velocity_m_s , y=g_n2o_m_2_yr)) + geom_point(size = 2.5, alpha=0.5, colour="#E1C16E") + theme_minimal() +  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), plot.background = element_rect(colour = "black", fill = NA, size = 1), legend.title=element_blank(), legend.text = element_text(size = 12), axis.title = element_text(size = 12), axis.text = element_text(size = 10, color="black"))  + ylab(expression(g~N[2]*`O`~m^`-2`~yr^`-1`)) + xlab(expression(Velocity~ (m ~s^`-1`) ))  + stat_cor(method="spearman", label.sep = "\n", label.x = 0.7, label.y = 9)
+N2Oveloc
+
+N2OTN <- ggplot(subset(dat, complete.cases(nutrient_status)), aes(x=tn_mg_l , y=g_n2o_m_2_yr)) + geom_point(colour="#E1C16E", size = 2.5, alpha=0.5) + theme_minimal() + ylab(expression(g~N[2]*`O`~m^`-2`~yr^`-1`)) +  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), plot.background = element_rect(colour = "black", fill = NA, size = 1), legend.title=element_blank(), legend.text = element_text(size = 12), axis.title = element_text(size = 12), axis.text = element_text(size = 10, color="black")) +   scale_x_log10()  + xlab(expression(TN~ (mg ~L^`-1`))) + stat_cor(method="spearman", label.sep = "\n", label.x = 1.7, label.y = 9)
+N2OTN
+
+N2ONO3 <- ggplot(subset(dat, complete.cases(nutrient_status)), aes(x=nitrateN_mg_l , y=g_n2o_m_2_yr)) + geom_point(colour="#E1C16E", size = 2.5, alpha=0.5) + theme_minimal() + ylim(-0.05, 6) +  ylab(expression(g~N[2]*`O`~m^`-2`~yr^`-1`)) + xlab(expression(NO[3]^"-"~"-N"~ (mg ~L^`-1`))) +  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank(), plot.background = element_rect(colour = "black", fill = NA, size = 1), legend.title=element_blank(), legend.text = element_text(size = 12), axis.title = element_text(size = 12), axis.text = element_text(size = 10, color="black")) + stat_cor(method="spearman", label.sep = "\n", label.x = 4.6, label.y = 5.45)
+N2ONO3
+
+tiff("CO2N2O_env_vars", units="in", width=8.7, height=7, res=300)
+
+env_vars <- ggarrange(CO2DO, CO2pH,  CO2veloc, CO2TP, CO2_N2O,
+                          N2O_CH4, N2Oveloc, N2OTN, N2ONO3,
+                                  ncol = 3, nrow = 3, align="hv",common.legend = T,legend="top",  labels = c("(a)", "(b)", "(c)", "(d)", "(e)", "(f)", "(g)", "(h)", "(i)"))
+env_vars
+
 dev.off()
 
 
-tiff("N2O_env_vars", units="in", width=6, height=7, res=300)
-N2O_env_vars <- ggarrange(N2O_CH4, N2Oveloc, N2OTN, N2ONO3, 
-                          ncol = 2, nrow = 2, align="hv",common.legend = T,legend="top",  labels = c("(a)", "(b)", "(c)", "(d)"))
-N2O_env_vars
-
-dev.off()
 
 ######################################
 
