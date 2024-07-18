@@ -6,13 +6,20 @@
 
 #Data dictionary for .csv file: 
 
-#Authors: Data authors	
+#Authors: Data authors
+
 #Title: Data source title	
+
 #Publication_year: Year of publication (or data collection, if unpublished)	
+
 #Publication	Country: Country of publication (or data collection, if unpublished)
+
 #Latitude: Study site latitude in decimal degrees	
+
 #Longitude: study site longitude in decimal degrees	
+
 #Site_name: Name or descriptor of ditch site	
+
 #n_sites: numer of data points averaged per ditch site	
 #Sampling_period: Time period where GHG sampling occured	
 #Sampling_frequency; Frequency of GHG sampling	
