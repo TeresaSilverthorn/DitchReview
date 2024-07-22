@@ -29,6 +29,8 @@ library(lmerTest)
 library(emmeans)
 library(ggpubr)
 library(tmaptools)
+library(cowplot)
+library(patchwork)
 
 
 
@@ -314,87 +316,98 @@ class(world)
 dat$g_co2_m_2_yr
 
 
-#scale_x_continuous(trans = "sign", breaks = c(-10,1,10,100,1000,10000), labels = c("-10","1", "10", "100", "1,000", "10,000")
-
-tiff("CO2_map", units="in", width=3*plot_ratio, height=3, res=300)
-
-CO2_map <- ggplot(data = world) +
+CO2_map <- ggplot(data = world )  +
   geom_sf(fill = "grey", color=NA) +  theme_void() +
-  geom_point(data = filter(distinct(dat, longitude, latitude, g_co2_m_2_yr), !is.na(longitude)), aes(x = longitude, y = latitude, size= g_co2_m_2_yr), colour="black", fill="#4780B3", alpha=0.5, shape=21) + # "distinct" plots only the unique coordinates
+  coord_sf(expand = FALSE) + 
+   geom_point(data = subset(dat, !is.na(g_co2_m_2_yr)), aes(x = longitude, y = latitude, size= g_co2_m_2_yr), colour="black", fill="#4780B3", alpha=0.5, shape=21) + # "distinct" plots only the unique coordinates
   xlab("Longitude") + ylab("Latitude") + 
   scale_size_binned(name =  expression(g~CO[2]~m^-2*~yr^-1) , range = c(0.5, 12),  
                     breaks = c(15, 150, 1500, 15000), 
                     labels = c("-150 to 15", "15 to 150", "150 to 1500", ">15000"),
                     guide = guide_legend(  # Adjust legend properties
     keywidth = unit(1.0, "cm"),  # Set legend key width
-    keyheight = unit(0.6, "cm"),  # Set legend key height
-    label.theme = element_text(size = 10)) )+ theme( axis.title.x=element_blank(), axis.title.y=element_blank())  + ggtitle("(a)") 
+    keyheight = unit(0.2, "cm"),  # Set legend key height
+    label.theme = element_text(size = 9)) )+ theme(plot.title = element_text(face = "bold", size = 14), legend.margin =  margin(0, 25, 0, 0), legend.position = "right", legend.justification = c(1, 1), axis.title.x=element_blank(), axis.title.y=element_blank()) + 
+geom_rect( xmin = -12, ymin = 35,xmax = 48,ymax = 70,fill = NA, colour = "black",  size = 0.6 ) +
+  ggtitle("(a)") 
 CO2_map
+
+
+plot_ratio <- tmaptools::get_asp_ratio(world)
+
+tiff("CO2_map", units="in", width=4*plot_ratio, height=4, res=300) 
+
+CO2_map_full <- ggdraw(CO2_map) +
+  draw_plot(
+    {   
+      CO2_map + 
+        coord_sf(
+          xlim = c(-12, 48),
+          ylim = c(35, 70),
+          expand = FALSE) +           
+        theme(legend.position = "none", plot.title = element_blank())
+    },
+    # The distance along a (0,1) x-axis to draw the left edge of the plot
+    x = 0.68, 
+    # The distance along a (0,1) y-axis to draw the bottom edge of the plot
+    y = .001,
+    # The width and height of the plot expressed as proportion of the entire ggdraw object
+    width = 0.40, 
+    height = 0.40)
+CO2_map_full
 
 dev.off()
 
-plot_ratio <- tmaptools::get_asp_ratio(world)
 
 
 
 N2O_map <- ggplot(data = world) +
   geom_sf(fill = "grey", color=NA) +  theme_void() +
-  geom_point(data = filter(distinct(dat, longitude, latitude, g_n2o_m_2_yr), !is.na(longitude)), aes(x = longitude, y = latitude, size= g_n2o_m_2_yr), colour="black", fill="#304F3B", alpha=0.5, shape=21) +
-  xlab("Longitude") + ylab("Latitude") + scale_size_continuous(name =  expression(g~N[2]*`O`~m^-2~yr^-1) , range = c(2, 10), guide = guide_legend(  # Adjust legend properties
+  coord_sf(expand = FALSE) + 
+  geom_point(data = subset(dat, !is.na(g_n2o_m_2_yr)), aes(x = longitude, y = latitude, size= g_n2o_m_2_yr), colour="black", fill="#304F3B", alpha=0.5, shape=21) + 
+      xlab("Longitude") + ylab("Latitude") + scale_size_binned(name =  expression(g~N[2]*`O`~m^-2~yr^-1) , range = c(0.5, 10), breaks = c(2.5, 5.0, 7.5, 10.0), 
+                      labels = c("-0.05 to 2.5", "2.5 to 5.0", "5.0 to 7.5", ">10.0"),
+    guide = guide_legend(  # Adjust legend properties
     keywidth = unit(1.0, "cm"),  # Set legend key width
     keyheight = unit(0.2, "cm"),  # Set legend key height
-    label.theme = element_text(size = 10)) ) + theme( axis.title.x=element_blank(), axis.title.y=element_blank()) + ggtitle("(b)") 
+    label.theme = element_text(size = 9)) ) + theme(plot.title = element_text(face = "bold", size = 14), legend.position = "right", legend.justification = c(1, 1), axis.title.x=element_blank(), axis.title.y=element_blank()) + ggtitle("(b)") +   geom_rect( xmin = -10, ymin = 45,xmax = 36,ymax = 70,fill = NA, 
+      colour = "black",  size = 0.6 ) 
 N2O_map
 
+plot_ratio <- tmaptools::get_asp_ratio(world)
 
-europe_limits <- list(
-  xlim = c(-10, 36),  # Longitude limits
-  ylim = c(39, 75)  # Latitude limits
-)
+tiff("N2O_map", units="in", width=4*plot_ratio, height=4, res=300)
 
-N2O_map_EU <- ggplot(data = world) +
-  geom_sf(fill = "grey", color=NA) +  theme_void() +
-  geom_point(data = filter(distinct(dat, longitude, latitude, g_n2o_m_2_yr), !is.na(longitude)), aes(x = longitude, y = latitude, size= g_n2o_m_2_yr), colour="black", fill="#304F3B", alpha=0.5, shape=21) +
-  xlab("Longitude") + ylab("Latitude") + scale_size_continuous(name =  expression(g~N[2]*`O`~m^-2~yr^-1) , range = c(2, 10), guide = guide_legend(  # Adjust legend properties
-    keywidth = unit(1.0, "cm"),  # Set legend key width
-    keyheight = unit(0.2, "cm"),  # Set legend key height
-    label.theme = element_text(size = 10)) ) + theme( plot.margin = unit(c(-2, 0, -2, 0), "cm"),   axis.title.x=element_blank(), axis.title.y=element_blank()) +
-  coord_sf(xlim = europe_limits$xlim, ylim = europe_limits$ylim)
-N2O_map_EU
-
-# Create the inset plot
-N2O_grob <- ggplotGrob(N2O_map_EU)
-
-# Add the inset to the main map
-N2O_map_with_inset <- N2O_map +
-  annotation_custom(grob = N2O_grob, xmin = -160, xmax = -30, ymin = -80, ymax = 0)  
-N2O_map_with_inset
-
-
-### combine
-
-tiff("global_dis.tiff", units="in", width=6, height=3, res=300)
-
-global_dis <- ggarrange(CO2_map, N2O_map, 
-                     ncol = 2, nrow = 1, align="hv",common.legend = F)
-global_dis
+N2O_map_full <- ggdraw(N2O_map) +
+  draw_plot(
+    {   
+      N2O_map + 
+        coord_sf(
+          xlim = c(-10, 36),
+          ylim = c(45, 70),
+          expand = FALSE) +           
+        theme(legend.position = "none", plot.title = element_blank())
+    },
+    # The distance along a (0,1) x-axis to draw the left edge of the plot
+    x = 0.70, 
+    # The distance along a (0,1) y-axis to draw the bottom edge of the plot
+    y = .001,
+    # The width and height of the plot expressed as proportion of the entire ggdraw object
+    width = 0.40, 
+    height = 0.40)
+N2O_map_full
 
 dev.off()
 
+#pdf("global_dis.pdf", width=3.5*plot_ratio, height=6)
 
+tiff("global_dist.tiff", units="in", width=3.5*plot_ratio, height=6, res=300)
 
+global_dist <- ggarrange(CO2_map_full, N2O_map_full, 
+                        ncol = 1, nrow = 2, align="v",common.legend = F )
+global_dist
 
-tiff("globe.tiff", units="in", width=6, height=3, res=300)
-
-ggplot(data = world) +
-  geom_sf()
-
-dev.off()
-
-
-
-
-
+dev.off() # the (b) plot will not align, so need to do it in post (.edt file in Illustrator)
 
 
 #### GHG data ####
