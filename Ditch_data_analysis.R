@@ -626,22 +626,28 @@ soil_count
 dev.off()
 
 
-DOC_soil <- ggplot(subset(dat, !is.na(soil_type)), aes(x=soil_type , y=doc_mg_l, fill=soil_type)) +   geom_boxplot(outlier.shape = NA) +  geom_point(position = position_jitter(width = 0.15), size = 2.5, alpha=0.5) + theme_minimal() + theme(legend.position="none", axis.title = element_text(size = 16), axis.text = element_text(size = 14, color="black")) + scale_fill_manual(values=c("#FFACB7", "#4E745E")) +  xlab("Soil type")  
-DOC_soil
-
-
 tiff("CO2soil.tiff", units="in", width=4, height=4, res=300)
 
-CO2soil <- ggplot(subset(dat, !is.na(soil_type)), aes(x=soil_type , y=g_co2_m_2_yr, fill=soil_type)) +   geom_boxplot(outlier.shape = NA) +  geom_point(position = position_jitter(width = 0.15), size = 2.5, alpha=0.5) + theme_minimal() + theme(legend.position="none", axis.title = element_text(size = 16), axis.text = element_text(size = 14, color="black")) + scale_fill_manual(values=c("#FFACB7", "#4E745E")) +  xlab("Soil type")  +ylab(expression(g~CO[2]~m^-2*~yr^-1))
+CO2soil <- ggplot(subset(dat, !is.na(soil_type)), aes(x=soil_type , y=g_co2_m_2_yr, fill=soil_type)) +   geom_boxplot(outlier.shape = NA) +  geom_point(position = position_jitter(width = 0.35), size = 2.5, alpha=0.5) + theme_minimal() + theme(axis.title.x = element_blank(), axis.line = element_line(colour = "black"),   axis.ticks.y = element_line(), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.position="none", axis.title = element_text(size = 12), axis.text = element_text(size = 12, color="black")) + scale_fill_manual(values=c("#FFACB7", "#4E745E")) +  xlab("Soil type")  +ylab(expression(g~CO[2]~m^-2*~yr^-1)) +  scale_y_continuous(trans = "sign", breaks = c(-10,1,10,100,1000,10000), labels = c("-10","1", "10", "100", "1,000", "10,000"))
 CO2soil
 
 dev.off()
 
+
+
 tiff("N2Osoil.tiff", units="in", width=4, height=4, res=300)
 
-N2Osoil <- ggplot(subset(dat, !is.na(soil_type)),  aes(x=soil_type , y=g_n2o_m_2_yr, fill=soil_type)) +   geom_boxplot(outlier.shape = NA) +  geom_point(position = position_jitter(width = 0.15), size = 2) + theme_minimal() + theme(legend.position="none", axis.title = element_text(size = 16), axis.text = element_text(size = 14, color="black")) + scale_fill_manual(values=c("#FFACB7", "#4E745E")) +  xlab("Soil type") + ylab(expression(g~N[2]*`O`~m^-2~yr^-1)) #+  scale_y_continuous(trans='log2', labels = scales::number_format(accuracy = 0.01))
+N2Osoil <- ggplot(subset(dat, !is.na(soil_type)),  aes(x=soil_type , y=g_n2o_m_2_yr, fill=soil_type)) +   geom_boxplot(outlier.shape = NA) +  geom_point(position = position_jitter(width = 0.35), size = 2.5, alpha=0.5) + theme_minimal() + theme(axis.title.x = element_blank(), axis.line = element_line(colour = "black"),   axis.ticks.y = element_line(), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.position="none", axis.title = element_text(size = 12), axis.text = element_text(size = 12, color="black")) + scale_fill_manual(values=c("#FFACB7", "#4E745E")) +  xlab("Soil type") + ylab(expression(g~N[2]*`O`~m^-2~yr^-1)) + scale_y_continuous(trans = 'pseudo_log') 
 N2Osoil
 
+dev.off()
+
+
+#### DOC by soil type ####
+
+tiff("DOCsoil.tiff", units="in", width=3, height=3, res=300)
+DOC_soil <- ggplot(subset(dat, !is.na(soil_type)), aes(x=soil_type , y=doc_mg_l, fill=soil_type)) +   geom_boxplot(outlier.shape = NA) +  geom_point(position = position_jitter(width = 0.35), size = 2.5, alpha=0.5) + theme_minimal() + theme(axis.title.x = element_blank(), axis.line = element_line(colour = "black"),   axis.ticks.y = element_line(), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.position="none", axis.title = element_text(size = 12), axis.text = element_text(size = 12, color="black")) + scale_fill_manual(values=c("#FFACB7", "#4E745E")) +  xlab("Soil type")  +  ylab(expression(DOC~(mg~L^`-1`)))
+DOC_soil
 dev.off()
 
 #### Hydrological regime ####
@@ -749,6 +755,15 @@ N2Oveg
 
 #### Combine data for supplementary information ####
 
+tiff("soil_type_combined", units="in", width=6, height=6, res=300)
+
+combine <- ggarrange(CO2soil, N2Osoil, 
+                     ncol = 1, nrow = 2, align="hv",common.legend = F, labels = c("(a)", "(b)"))
+combine
+
+dev.off()
+
+
 tiff("land_use_combined", units="in", width=6, height=6, res=300)
 
 combine <- ggarrange(CO2landuse, N2Olanduse, 
@@ -758,11 +773,18 @@ combine
 dev.off()
 
 
+tiff("GHG_method", units="in", width=6, height=3, res=300)
 
-tiff("combined", units="in", width=6, height=6, res=300)
+combine <- ggarrange(CO2method, N2Omethod,  
+                     ncol = 2, nrow = 1, align="hv",common.legend = F, labels = c("(a)", "(b)" ))
+combine
 
-combine <- ggarrange(CO2method, N2Omethod,   CO2veg, N2Oveg,
-                     ncol = 2, nrow = 2, align="hv",common.legend = F, labels = c("(a)", "(b)", "(c)", "(d)") )
+dev.off()
+
+tiff("soil_veg", units="in", width=6, height=6, res=300)
+
+combine <- ggarrange(CO2veg, N2Oveg, CO2soil, N2Osoil, 
+                     ncol = 2, nrow = 2, align="hv",common.legend = F, labels = c("(a)", "(b)", "(c)", ("d")) )
 combine
 
 dev.off()
@@ -1061,7 +1083,7 @@ dat %>%
 #Since most of the data does not follow the assumption of normality, we can run a non-paramentric test: the Kruskal-Walis
 
 #### Kruskal wallis CO2 ####
-kruskal.test(g_co2_m_2_yr ~ ghg_sampling_method, data = subset(dat, !is.na(ghg_sampling_method)) ) # no sig diff
+kruskal.test(g_co2_m_2_yr ~ ghg_sampling_method, data = subset(dat, !is.na(ghg_sampling_method) & ghg_sampling_method != "Both") ) # no sig diff
 
 kruskal.test(g_co2_m_2_yr ~ soil_type, data = subset(dat, !is.na(soil_type)) ) # no sig diff
 
@@ -1084,7 +1106,7 @@ pairwise.wilcox.test(dat$g_co2_m_2_yr[!is.na(dat$nutrient_status)], dat$nutrient
 
 
 #### Kruskal wallis N2O ####
-kruskal.test(g_n2o_m_2_yr ~ ghg_sampling_method, data = subset(dat, !is.na(ghg_sampling_method)) ) #s 0.03
+kruskal.test(g_n2o_m_2_yr ~ ghg_sampling_method, data = subset(dat, !is.na(ghg_sampling_method) & ghg_sampling_method != "Both") ) #s 0.42
 
 kruskal.test(g_n2o_m_2_yr ~ soil_type, data = subset(dat, !is.na(soil_type)) ) # no sig diff
 
