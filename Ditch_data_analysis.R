@@ -33,7 +33,6 @@ library(cowplot)
 library(patchwork)
 
 
-
 # Set working directory for figures
 setwd("C:/Users/teres/Documents/Ditch lit review/DitchReview/Figures/")
 
@@ -426,26 +425,68 @@ t_test_result2$conf.int #CI
 
 #### Global ditch emissions ####
 
-## global ditch surface area is 53804240000 m2
+## global ditch surface area is 53,804,240,000 m2
+## Update taking into account Chris' comments about not needing the include the small estuary value:
+## global ditch surface area is 5,353,425 ha (Peacock et al. 2021), or 53,534,250,000 m2
 
+#CO2
+#mean
 2056.723/44.01*12.01 #convert to CO2-C
-561.2643*53804240000*1e-12 # 30.1984 Tg CO2-C
-
+561.2643*53534250000*1e-12 # 30.1984 Tg CO2-C #NEW: 30.04686 Tg CO2-C
+#lower
 1533.593/44.01*12.01 #convert to CO2-C
-418.5061*53804240000*1e-12 # 22.5174 Tg CO2-C
-
+418.5061*53534250000*1e-12 # 22.5174 Tg CO2-C #NEW: 22.40441 Tg CO2-C
+#upper
 2579.854/44.01*12.01 #convert to CO2-C
-704.0229*53804240000*1e-12 # 37.87942 Tg CO2-C
+704.0229*53534250000*1e-12 # 37.87942 Tg CO2-C #NEW: 37.68934 Tg CO2-C
 
-
-0.8919954 /44.013*28.01 #convert to N2O-N
-0.5676684*53804240000*1e-12 # 0.03054297 Tg N2O-N
-
+#N2O
+#mean
+0.8919954/44.013*28.01 #convert to N2O-N
+0.5676684*53534250000*1e-12 # 0.03054297 Tg N2O-N #NEW: 0.0303897 Tg N2O-N
+#lower
 0.4008087/44.013*28.01 #convert to N2O-N
-0.2550758*53804240000*1e-12 # 0.01372416 Tg N2O-N
-
+0.2550758*53534250000*1e-12 # 0.01372416 Tg N2O-N #NEW: 0.01365529 Tg N2O-N
+#upper
 1.3831820/44.013*28.01 #convert to N2O-N
-0.880261*53804240000*1e-12 # 0.04736177 Tg N2O-N
+0.880261*53534250000*1e-12 # 0.04736177 Tg N2O-N #NEW: 0.04712411 Tg N2O-N
+
+#### Percentage of global/inland water budgets ####
+#Global anthropogenic CO2 (Friedlingstein et al 2023): 11.1 Gt C or 11,100 Tg C
+#mean:  30.04686 Tg CO2-C / 11,100 Tg C
+30.04686/11100*100 #0.2706924%
+#lower: 22.40441 Tg CO2-C / 11,100 Tg C
+22.40441/11100*100 #0.2018415
+#upper: 37.68934 Tg CO2-C / 11,100 Tg C
+37.68934/11100*100 #0.3395436
+
+#Global anthropogenic N2O (Tian et al 2024): 6.5 Tg N year-1
+#mean: 0.0303897 Tg N2O-N / 6.5 Tg N year-1
+0.0303897/6.5*100 #0.4675338%
+#lower:  0.01365529 Tg N2O-N  / 6.5 Tg N year-1
+0.01365529/6.5*100 #0.2100814
+#upper: 0.04712411 Tg N2O-N / 6.5 Tg N year-1
+0.04712411/6.5*100 #0.7249863
+
+#Global inland water CO2 (Drake et al 2018): 3.9 Pg C or 3900 Tg C
+#mean: 30.04686 Tg CO2-C /3900 Tg C
+30.04686/3900*100 #0.7704323
+#lower: 22.40441 Tg CO2-C /3900 Tg C
+22.40441/3900*100 #0.5744721
+#upper: 37.68934 Tg CO2-C /3900 Tg C
+37.68934/3900*100 #0.9663933
+
+
+#Global inland water N2O (Tian et al 2024): 0.5 Tg N year-1 
+#mean: 0.0303897 Tg N2O-N / 0.5 Tg N year-1 
+0.0303897/0.5*100 #6.07794
+#lower:  0.01365529 Tg N2O-N  / 0.5 Tg N year-1 
+0.01365529/0.5*100 #2.731058%
+#upper: 0.04712411 Tg N2O-N / 0.5 Tg N year-1 
+0.04712411/0.5*100 #9.424822%
+
+
+
 
 # Convert to CO2-C for comparison with inland waters
 x <- mean(dat$g_co2_m_2_yr, na.rm=T)
