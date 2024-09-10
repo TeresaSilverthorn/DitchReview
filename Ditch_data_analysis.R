@@ -275,6 +275,18 @@ sign_trans <- function(base = exp(1)){
 
 st(dat, vars = c('elevation_masl','mean_width_m', 'mean_water_depth_m', 'mean_velocity_m_s', 'mean_discharge_m3_s', 'do_mg_l', 'pH', 'ec_us_cm', 'doc_mg_l', 'tn_mg_l', 'nitrateN_mg_l',  'tp_mg_l', 'chl_a_mg_l' ))
 
+#average negative CO2
+x <- subset(dat, g_co2_m_2_yr<=0)
+count(x$g_co2_m_2_yr)
+mean(x$g_co2_m_2_yr)
+sd(x$g_co2_m_2_yr)
+
+#average negative N2O
+y <- subset(dat, g_n2o_m_2_yr<=0)
+count(y$g_n2o_m_2_yr)
+mean(y$g_n2o_m_2_yr)
+sd(y$g_n2o_m_2_yr)
+
 
 
 #### Plots #####
@@ -318,7 +330,7 @@ dat$g_co2_m_2_yr
 CO2_map <- ggplot(data = world )  +
   geom_sf(fill = "grey", color=NA) +  theme_void() +
   coord_sf(expand = FALSE) + 
-   geom_point(data = subset(dat, !is.na(g_co2_m_2_yr)), aes(x = longitude, y = latitude, size= g_co2_m_2_yr), colour="black", fill="#4780B3", alpha=0.5, shape=21) + # "distinct" plots only the unique coordinates
+   geom_point(data = subset(dat, !is.na(g_co2_m_2_yr)), aes(x = longitude, y = latitude, size= g_co2_m_2_yr), colour="black", fill="#C87542", alpha=0.5, shape=21) + # "distinct" plots only the unique coordinates
   xlab("Longitude") + ylab("Latitude") + 
   scale_size_binned(name =  expression(g~CO[2]~m^-2*~yr^-1) , range = c(0.5, 12),  
                     breaks = c(15, 150, 1500, 15000), 
@@ -363,7 +375,7 @@ dev.off()
 N2O_map <- ggplot(data = world) +
   geom_sf(fill = "grey", color=NA) +  theme_void() +
   coord_sf(expand = FALSE) + 
-  geom_point(data = subset(dat, !is.na(g_n2o_m_2_yr)), aes(x = longitude, y = latitude, size= g_n2o_m_2_yr), colour="black", fill="#304F3B", alpha=0.5, shape=21) + 
+  geom_point(data = subset(dat, !is.na(g_n2o_m_2_yr)), aes(x = longitude, y = latitude, size= g_n2o_m_2_yr), colour="black", fill="#78629B", alpha=0.5, shape=21) + 
       xlab("Longitude") + ylab("Latitude") + scale_size_binned(name =  expression(g~N[2]*`O`~m^-2~yr^-1) , range = c(0.5, 10), breaks = c(2.5, 5.0, 7.5, 10.0), 
                       labels = c("-0.05 to 2.5", "2.5 to 5.0", "5.0 to 7.5", ">10.0"),
     guide = guide_legend(  # Adjust legend properties
@@ -423,6 +435,19 @@ t_test_result2 <- t.test(dat$g_n2o_m_2_yr, na.rm = TRUE)
 t_test_result2$estimate # mean
 t_test_result2$conf.int #CI
 
+# Convert to t CO2-C ha-1 yr-1 
+#       2057 g co2 m-2 y-1
+2056.723/44.01*12.01/90.718 #6.186913 t CO2-C ha-1 yr-1
+#convert to co2-c
+#convert g/m2 to t US tons/ha using  /90.718
+#95% CI: 
+1533.593/44.01*12.01/90.718 #4.613264
+2579.854/44.01*12.01/90.718 #7.760564
+
+#with night time emissions 27% higher Gomez-Gener et al 2021
+
+6.186913*1.27 #7.85738
+
 #### Global ditch emissions ####
 
 ## global ditch surface area is 53,804,240,000 m2
@@ -439,6 +464,19 @@ t_test_result2$conf.int #CI
 #upper
 2579.854/44.01*12.01 #convert to CO2-C
 704.0229*53534250000*1e-12 # 37.87942 Tg CO2-C #NEW: 37.68934 Tg CO2-C
+
+#If we add noctural CO2 emissions, which are 27% higher than daytime
+561.2643*1.27 #712.8057
+712.8057*53534250000*1e-12 #38.15952 Tg CO2-C
+
+#lower: 
+418.5061*1.27
+531.5027*53534250000*1e-12 #28.4536 Tg CO2-C
+
+#upper
+712.8057*1.27
+905.2632*53534250000*1e-12 #48.46259 Tg CO2-C
+
 
 #N2O
 #mean
@@ -476,6 +514,13 @@ t_test_result2$conf.int #CI
 #upper: 37.68934 Tg CO2-C /3900 Tg C
 37.68934/3900*100 #0.9663933
 
+#including nocturnal emissions: 
+#mean: 38.15952 Tg CO2-C
+38.15952/3900*100 #0.9784492 %
+#lower: 28.4536 Tg CO2-C
+28.4536/3900*100 # 0.7295795 %
+#upper: 48.46259 Tg CO2-C
+48.46259/3900*100 #1.242631
 
 #Global inland water N2O (Tian et al 2024): 0.5 Tg N year-1 
 #mean: 0.0303897 Tg N2O-N / 0.5 Tg N year-1 
@@ -507,6 +552,16 @@ summary(dat$ch4_ebull_g_ch4_m_2_yr)
 summary(dat$g_n2o_m_2_yr)
 
 max(dat$g_n2o_m_2_yr, na.rm=T)
+
+
+#### Proportion of CH4 from ebulition
+
+dat$prop_ebul <- dat$ch4_ebull_g_ch4_m_2_yr / (dat$ch4_diff_g_ch4_m_2_yr + dat$ch4_ebull_g_ch4_m_2_yr) *100
+
+sum(!is.na(dat$prop_ebul))  #20
+
+mean(dat$prop_ebul, na.rm=T) #79.78185
+sd(dat$prop_ebul, na.rm=T)
 
 #############################################################
 #### Correlation plot ####
@@ -593,6 +648,10 @@ CO2method
 N2Omethod <- ggplot(subset(dat, ghg_sampling_method!="Both"), aes(x=ghg_sampling_method , y=g_n2o_m_2_yr, fill=ghg_sampling_method) )+   geom_boxplot(outlier.shape = NA) +  geom_point(position = position_jitter(width = 0.35), size = 2.5, alpha=0.5) + theme_minimal() + theme(axis.title.x = element_blank(), axis.line = element_line(colour = "black"),   axis.ticks.y = element_line(), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),legend.position="none", axis.title = element_text(size = 12), axis.text = element_text(size = 12, color="black")) +  scale_fill_manual(values=c("Concentration" = "#FFD3B5", "Chamber" = "#FF97B5")) +  xlab("GHG sampling method") + ylab(expression(g~N[2]*`O`~m^-2~yr^-1)) + scale_y_continuous(trans = 'pseudo_log') 
 N2Omethod
 
+# Mean and standard deviation CO2/N2O by sampling method
+aggregate(g_n2o_m_2_yr ~ ghg_sampling_method, data = dat, 
+          FUN = function(x) c(mean = mean(x, na.rm = TRUE), sd = sd(x, na.rm = TRUE)))
+
 #### Trophic status ####
 # Reorder factor levels more logically
 levels(dat$nutrient_status)
@@ -657,6 +716,10 @@ N2Olanduse
 
 dev.off()
 
+# Mean and standard deviation CO2/N2O  by land use
+aggregate(g_n2o_m_2_yr ~ land_use_clc, data = dat, 
+          FUN = function(x) c(mean = mean(x, na.rm = TRUE), sd = sd(x, na.rm = TRUE)))
+
 
 
 #### Soil type ####
@@ -682,6 +745,11 @@ N2Osoil <- ggplot(subset(dat, !is.na(soil_type)),  aes(x=soil_type , y=g_n2o_m_2
 N2Osoil
 
 dev.off()
+
+# Mean and standard deviation N2O by soil type
+aggregate(g_n2o_m_2_yr ~ soil_type, data = dat, 
+          FUN = function(x) c(mean = mean(x, na.rm = TRUE), sd = sd(x, na.rm = TRUE)))
+
 
 
 #### DOC by soil type ####
@@ -773,7 +841,7 @@ N2OKGclimate
 
 dev.off()
 
-# Mean and standard deviation CO2 by climate
+# Mean and standard deviation N2O by climate
 aggregate(g_n2o_m_2_yr ~ kg_main_climate_group, data = dat, 
           FUN = function(x) c(mean = mean(x, na.rm = TRUE), sd = sd(x, na.rm = TRUE)))
 
@@ -791,7 +859,9 @@ CO2veg
 N2Oveg <- ggplot(subset(dat, complete.cases(instream_vegetation)), aes(x=instream_vegetation, y=g_n2o_m_2_yr, fill=instream_vegetation)) + geom_boxplot(outlier.shape = NA) +  geom_point(position = position_jitter(width = 0.35), size = 2.5, alpha=0.5) + theme_minimal() +  theme(axis.title.x = element_blank(), axis.line = element_line(colour = "black"),   axis.ticks.y = element_line(), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),legend.position="none", axis.title = element_text(size = 12), axis.text = element_text(size = 12, color="black")) + scale_x_discrete(labels = c('No veg', 'Veg')) + scale_fill_manual(values = c("Yes" = "#AAD487", "No" = "#4780B3")) + ylab(expression(g~N[2]*`O`~m^-2~yr^-1)) + scale_y_continuous(trans = 'pseudo_log') 
 N2Oveg
 
-
+# Mean and standard deviation N2O by veg presence/absence
+aggregate(g_n2o_m_2_yr ~ instream_vegetation, data = dat, 
+          FUN = function(x) c(mean = mean(x, na.rm = TRUE), sd = sd(x, na.rm = TRUE)))
 
 
 #### Combine data for supplementary information ####
@@ -1058,31 +1128,31 @@ CO2_CH4
 #######Combine significant environmental variables ####
 # those with a significant Spearman correlation <.4 (moderately correlated) and <.7 (strongly correlated)
 
-CO2DO <- ggplot(dat, aes(x=do_mg_l , y=g_co2_m_2_yr)) + geom_point( size = 2.5, alpha=0.5, colour="red") + theme_minimal() +  theme(axis.line = element_line(colour = "black"),  axis.ticks.x = element_line(), axis.ticks.y = element_line(), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.title=element_blank(), legend.text = element_text(size = 12), axis.title = element_text(size = 12), axis.text = element_text(size = 10, color="black")) + xlab(expression(DO~(mg~L^`-1`))) + ylab(expression(g~CO[2]~m^`-2`*~yr^`-1`)) + stat_cor(method="spearman", label.sep = "\n", label.x = 7.2, label.y = 16300)
+CO2DO <- ggplot(dat, aes(x=do_mg_l , y=g_co2_m_2_yr)) + geom_point( size = 2.5, alpha=0.5, colour="#C87542") + theme_minimal() +  theme(axis.line = element_line(colour = "black"),  axis.ticks.x = element_line(), axis.ticks.y = element_line(), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.title=element_blank(), legend.text = element_text(size = 12), axis.title = element_text(size = 12), axis.text = element_text(size = 10, color="black")) + xlab(expression(DO~(mg~L^`-1`))) + ylab(expression(g~CO[2]~m^`-2`*~yr^`-1`)) + stat_cor(method="spearman", label.sep = "\n", label.x = 7.2, label.y = 16300)
 CO2DO
 
-CO2_N2O <- ggplot(dat, aes(y=g_co2_m_2_yr, x=g_n2o_m_2_yr)) + geom_point( size = 2.5, alpha=0.5, colour="red") + theme_minimal() + theme(axis.line = element_line(colour = "black"),  axis.ticks.x = element_line(), axis.ticks.y = element_line(), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),legend.title=element_blank(), legend.text = element_text(size = 12), axis.title = element_text(size = 12), axis.text = element_text(size = 10, color="black")) +  xlab(expression(g~N[2]*`O`~m^`-2`~yr^`-1`)) + ylab(expression(g~CO[2]~m^`-2`*~yr^`-1`)) + stat_cor(method="spearman", label.sep = "\n", label.x = 5.5, label.y = 16000)
+CO2_N2O <- ggplot(dat, aes(y=g_co2_m_2_yr, x=g_n2o_m_2_yr)) + geom_point( size = 2.5, alpha=0.5, colour="#C87542") + theme_minimal() + theme(axis.line = element_line(colour = "black"),  axis.ticks.x = element_line(), axis.ticks.y = element_line(), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),legend.title=element_blank(), legend.text = element_text(size = 12), axis.title = element_text(size = 12), axis.text = element_text(size = 10, color="black")) +  xlab(expression(g~N[2]*`O`~m^`-2`~yr^`-1`)) + ylab(expression(g~CO[2]~m^`-2`*~yr^`-1`)) + stat_cor(method="spearman", label.sep = "\n", label.x = 5.5, label.y = 16000)
 CO2_N2O
 
-CO2veloc <- ggplot(dat, aes(x=mean_velocity_m_s , y=g_co2_m_2_yr)) + geom_point(size = 2.5, alpha=0.5, colour="red") + theme_minimal() +  theme(axis.line = element_line(colour = "black"),  axis.ticks.x = element_line(), axis.ticks.y = element_line(), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),legend.title=element_blank(), legend.text = element_text(size = 12), axis.title = element_text(size = 12), axis.text = element_text(size = 10, color="black")) + xlab(expression(Velocity~ (m ~s^`-1`) )) + ylab(expression(g~CO[2]~m^`-2`*~yr^`-1`)) + stat_cor(method="spearman", label.sep = "\n",  label.x = 0.5, label.y = 16350)
+CO2veloc <- ggplot(dat, aes(x=mean_velocity_m_s , y=g_co2_m_2_yr)) + geom_point(size = 2.5, alpha=0.5, colour="#C87542") + theme_minimal() +  theme(axis.line = element_line(colour = "black"),  axis.ticks.x = element_line(), axis.ticks.y = element_line(), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),legend.title=element_blank(), legend.text = element_text(size = 12), axis.title = element_text(size = 12), axis.text = element_text(size = 10, color="black")) + xlab(expression(Velocity~ (m ~s^`-1`) )) + ylab(expression(g~CO[2]~m^`-2`*~yr^`-1`)) + stat_cor(method="spearman", label.sep = "\n",  label.x = 0.5, label.y = 16350)
 CO2veloc
 
-CO2pH <- ggplot(dat, aes(x=pH , y=g_co2_m_2_yr)) + geom_point(size = 2.5, alpha=0.5, colour="red") + theme_minimal() + theme(axis.line = element_line(colour = "black"),  axis.ticks.x = element_line(), axis.ticks.y = element_line(), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),legend.title=element_blank(), legend.text = element_text(size = 12), axis.title = element_text(size = 12), axis.text = element_text(size = 10, color="black")) + ylab(expression(g~CO[2]~m^`-2`*~yr^`-1`)) + stat_cor(method="spearman", label.sep = "\n",  label.x = 0.5, label.y = 16450)
+CO2pH <- ggplot(dat, aes(x=pH , y=g_co2_m_2_yr)) + geom_point(size = 2.5, alpha=0.5, colour="#C87542") + theme_minimal() + theme(axis.line = element_line(colour = "black"),  axis.ticks.x = element_line(), axis.ticks.y = element_line(), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),legend.title=element_blank(), legend.text = element_text(size = 12), axis.title = element_text(size = 12), axis.text = element_text(size = 10, color="black")) + ylab(expression(g~CO[2]~m^`-2`*~yr^`-1`)) + stat_cor(method="spearman", label.sep = "\n",  label.x = 0.5, label.y = 16450)
 CO2pH
 
-CO2TP <- ggplot(subset(dat, complete.cases(tp_mg_l)), aes(x=tp_mg_l , y=g_co2_m_2_yr)) + geom_point(size = 2.5, alpha=0.5, colour="red") + theme_minimal() + theme(axis.line = element_line(colour = "black"),  axis.ticks.x = element_line(), axis.ticks.y = element_line(), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.title=element_blank(), legend.text = element_text(size = 12), axis.title = element_text(size = 12), axis.text = element_text(size = 10, color="black")) + xlab(expression(TP~ (mg ~L^`-1`))) + ylab(expression(g~CO[2]~m^`-2`*~yr^`-1`)) + stat_cor(method="spearman", label.sep = "\n",  label.x = 1.2, label.y = 3600)
+CO2TP <- ggplot(subset(dat, complete.cases(tp_mg_l)), aes(x=tp_mg_l , y=g_co2_m_2_yr)) + geom_point(size = 2.5, alpha=0.5, colour="#C87542") + theme_minimal() + theme(axis.line = element_line(colour = "black"),  axis.ticks.x = element_line(), axis.ticks.y = element_line(), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.title=element_blank(), legend.text = element_text(size = 12), axis.title = element_text(size = 12), axis.text = element_text(size = 10, color="black")) + xlab(expression(TP~ (mg ~L^`-1`))) + ylab(expression(g~CO[2]~m^`-2`*~yr^`-1`)) + stat_cor(method="spearman", label.sep = "\n",  label.x = 1.2, label.y = 3600)
 CO2TP
 
-N2O_CH4 <- ggplot(dat, aes(x=ch4_diff_g_ch4_m_2_yr , y=g_n2o_m_2_yr)) + geom_point( size = 2.5, alpha=0.5, colour="#E1C16E") + theme_minimal() + theme_minimal() + theme(axis.line = element_line(colour = "black"),  axis.ticks.x = element_line(), axis.ticks.y = element_line(), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.title=element_blank(), legend.text = element_text(size = 12), axis.title = element_text(size = 12), axis.text = element_text(size = 10, color="black")) +  ylab(expression(g~N[2]*`O`~m^`-2`~yr^`-1`))  +xlab(expression(g~CH[4]~m^`-2`~yr^`-1`)) + xlim(-0.05, 800) + stat_cor(method="spearman", label.sep = "\n", label.x = 400, label.y = 8.5)
+N2O_CH4 <- ggplot(dat, aes(x=ch4_diff_g_ch4_m_2_yr , y=g_n2o_m_2_yr)) + geom_point( size = 2.5, alpha=0.5, colour="#78629B") + theme_minimal() + theme_minimal() + theme(axis.line = element_line(colour = "black"),  axis.ticks.x = element_line(), axis.ticks.y = element_line(), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.title=element_blank(), legend.text = element_text(size = 12), axis.title = element_text(size = 12), axis.text = element_text(size = 10, color="black")) +  ylab(expression(g~N[2]*`O`~m^`-2`~yr^`-1`))  +xlab(expression(g~CH[4]~m^`-2`~yr^`-1`)) + xlim(-0.05, 800) + stat_cor(method="spearman", label.sep = "\n", label.x = 400, label.y = 8.5)
 N2O_CH4 # note one outlying value of CH4 (vinasse) was removed for plotting
 
-N2Oveloc <- ggplot(dat, aes(x=mean_velocity_m_s , y=g_n2o_m_2_yr)) + geom_point(size = 2.5, alpha=0.5, colour="#E1C16E") + theme_minimal() +  theme(axis.line = element_line(colour = "black"),  axis.ticks.x = element_line(), axis.ticks.y = element_line(), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.title=element_blank(), legend.text = element_text(size = 12), axis.title = element_text(size = 12), axis.text = element_text(size = 10, color="black"))  + ylab(expression(g~N[2]*`O`~m^`-2`~yr^`-1`)) + xlab(expression(Velocity~ (m ~s^`-1`) ))  + stat_cor(method="spearman", label.sep = "\n", label.x = 0.55, label.y = 9)
+N2Oveloc <- ggplot(dat, aes(x=mean_velocity_m_s , y=g_n2o_m_2_yr)) + geom_point(size = 2.5, alpha=0.5, colour="#78629B") + theme_minimal() +  theme(axis.line = element_line(colour = "black"),  axis.ticks.x = element_line(), axis.ticks.y = element_line(), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.title=element_blank(), legend.text = element_text(size = 12), axis.title = element_text(size = 12), axis.text = element_text(size = 10, color="black"))  + ylab(expression(g~N[2]*`O`~m^`-2`~yr^`-1`)) + xlab(expression(Velocity~ (m ~s^`-1`) ))  + stat_cor(method="spearman", label.sep = "\n", label.x = 0.55, label.y = 9)
 N2Oveloc
 
-N2OTN <- ggplot(subset(dat, complete.cases(nutrient_status)), aes(x=tn_mg_l , y=g_n2o_m_2_yr)) + geom_point(colour="#E1C16E", size = 2.5, alpha=0.5) + theme_minimal() + ylab(expression(g~N[2]*`O`~m^`-2`~yr^`-1`)) +  theme(axis.line = element_line(colour = "black"),  axis.ticks.x = element_line(), axis.ticks.y = element_line(), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.title=element_blank(), legend.text = element_text(size = 12), axis.title = element_text(size = 12), axis.text = element_text(size = 10, color="black")) +   scale_x_log10()  + xlab(expression(TN~ (mg ~L^`-1`))) + stat_cor(method="spearman", label.sep = "\n", label.x = 1.5, label.y = 9)
+N2OTN <- ggplot(subset(dat, complete.cases(nutrient_status)), aes(x=tn_mg_l , y=g_n2o_m_2_yr)) + geom_point(colour="#78629B", size = 2.5, alpha=0.5) + theme_minimal() + ylab(expression(g~N[2]*`O`~m^`-2`~yr^`-1`)) +  theme(axis.line = element_line(colour = "black"),  axis.ticks.x = element_line(), axis.ticks.y = element_line(), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.title=element_blank(), legend.text = element_text(size = 12), axis.title = element_text(size = 12), axis.text = element_text(size = 10, color="black")) +   scale_x_log10()  + xlab(expression(TN~ (mg ~L^`-1`))) + stat_cor(method="spearman", label.sep = "\n", label.x = 1.5, label.y = 9)
 N2OTN
 
-N2ONO3 <- ggplot(subset(dat, complete.cases(nutrient_status)), aes(x=nitrateN_mg_l , y=g_n2o_m_2_yr)) + geom_point(colour="#E1C16E", size = 2.5, alpha=0.5) + theme_minimal() + ylim(-0.05, 6) +  ylab(expression(g~N[2]*`O`~m^`-2`~yr^`-1`)) + xlab(expression(NO[3]^"-"~"-N"~ (mg ~L^`-1`))) +  theme(axis.line = element_line(colour = "black"),  axis.ticks.x = element_line(), axis.ticks.y = element_line(), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.title=element_blank(), legend.text = element_text(size = 12), axis.title = element_text(size = 12), axis.text = element_text(size = 10, color="black")) + stat_cor(method="spearman", label.sep = "\n", label.x = 4, label.y = 5.15)
+N2ONO3 <- ggplot(subset(dat, complete.cases(nutrient_status)), aes(x=nitrateN_mg_l , y=g_n2o_m_2_yr)) + geom_point(colour="#78629B", size = 2.5, alpha=0.5) + theme_minimal() + ylim(-0.05, 6) +  ylab(expression(g~N[2]*`O`~m^`-2`~yr^`-1`)) + xlab(expression(NO[3]^"-"~"-N"~ (mg ~L^`-1`))) +  theme(axis.line = element_line(colour = "black"),  axis.ticks.x = element_line(), axis.ticks.y = element_line(), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.title=element_blank(), legend.text = element_text(size = 12), axis.title = element_text(size = 12), axis.text = element_text(size = 10, color="black")) + stat_cor(method="spearman", label.sep = "\n", label.x = 4, label.y = 5.15)
 N2ONO3
 
 tiff("CO2N2O_env_vars", units="in", width=7.7, height=6.2, res=300)
@@ -1121,22 +1191,25 @@ dat %>%
 
 #Note that, if your sample size is greater than 50, the normal QQ plot is preferred because at larger sample sizes the Shapiro-Wilk test becomes very sensitive even to a minor deviation from normality
 
-#Since most of the data does not follow the assumption of normality, we can run a non-paramentric test: the Kruskal-Walis
+#Since most of the data does not follow the assumption of normality, we can run a non-paramentric test: the Kruskal-Walis (for 3 or more groups) or Mann-Whitney test (for 2 groups)
+
+#### Mann-Whitney U test CO2 ####
+
+wilcox.test(g_co2_m_2_yr ~ ghg_sampling_method, data = subset(dat, !is.na(ghg_sampling_method) & ghg_sampling_method != "Both") ) # no sig diff
+
+wilcox.test(g_co2_m_2_yr ~ soil_type, data = subset(dat, !is.na(soil_type)) ) # no sig diff
+
+wilcox.test(g_co2_m_2_yr ~ hydrological_regime, data = subset(dat, !is.na(hydrological_regime)) ) #no sig diff
+
+wilcox.test(g_co2_m_2_yr ~ instream_vegetation, data = subset(dat, !is.na(instream_vegetation)) ) # no sig diff
 
 #### Kruskal wallis CO2 ####
-kruskal.test(g_co2_m_2_yr ~ ghg_sampling_method, data = subset(dat, !is.na(ghg_sampling_method) & ghg_sampling_method != "Both") ) # no sig diff
-
-kruskal.test(g_co2_m_2_yr ~ soil_type, data = subset(dat, !is.na(soil_type)) ) # no sig diff
 
 kruskal.test(g_co2_m_2_yr ~ nutrient_status, data = subset(dat, !is.na(nutrient_status)) ) # no sig diff
 
 kruskal.test(g_co2_m_2_yr ~ land_use_clc, data = subset(dat, !is.na(land_use_clc)) ) # no sig diff
 
 kruskal.test(g_co2_m_2_yr ~ kg_main_climate_group, data = subset(dat, !is.na(kg_main_climate_group)) ) # p = 0.03
-
-kruskal.test(g_co2_m_2_yr ~ hydrological_regime, data = subset(dat, !is.na(hydrological_regime)) ) #no sig diff
-
-kruskal.test(g_co2_m_2_yr ~ instream_vegetation, data = subset(dat, !is.na(instream_vegetation)) ) # no sig diff
 
 #check for the pairwise differences
 pairwise.wilcox.test(dat$g_co2_m_2_yr[!is.na(dat$kg_main_climate_group)], dat$kg_main_climate_group[!is.na(dat$kg_main_climate_group)], p.adjust.method = "BH") # no sig dif
@@ -1145,11 +1218,17 @@ pairwise.wilcox.test(dat$g_co2_m_2_yr[!is.na(dat$land_use_clc)], dat$land_use_cl
 
 pairwise.wilcox.test(dat$g_co2_m_2_yr[!is.na(dat$nutrient_status)], dat$nutrient_status[!is.na(dat$nutrient_status)], p.adjust.method = "BH") # no sig diff
 
+#### Mann-Whitney U test N2O  ####
+wilcox.test(g_n2o_m_2_yr ~ ghg_sampling_method, data = subset(dat, !is.na(ghg_sampling_method) & ghg_sampling_method != "Both") ) #s 0.43
+
+wilcox.test(g_n2o_m_2_yr ~ soil_type, data = subset(dat, !is.na(soil_type)) ) # no sig diff
+
+wilcox.test(g_n2o_m_2_yr ~ hydrological_regime, data = subset(dat, !is.na(hydrological_regime)) ) # p = 0.001
+
+
+wilcox.test(g_n2o_m_2_yr ~ instream_vegetation, data = subset(dat, !is.na(instream_vegetation)) ) # no sig diff
 
 #### Kruskal wallis N2O ####
-kruskal.test(g_n2o_m_2_yr ~ ghg_sampling_method, data = subset(dat, !is.na(ghg_sampling_method) & ghg_sampling_method != "Both") ) #s 0.42
-
-kruskal.test(g_n2o_m_2_yr ~ soil_type, data = subset(dat, !is.na(soil_type)) ) # no sig diff
 
 kruskal.test(g_n2o_m_2_yr ~ nutrient_status, data = subset(dat, !is.na(nutrient_status)) ) # 0.001
 
@@ -1157,9 +1236,6 @@ kruskal.test(g_n2o_m_2_yr ~ land_use_clc, data = subset(dat, !is.na(land_use_clc
 
 kruskal.test(g_n2o_m_2_yr ~ kg_main_climate_group, data = subset(dat, !is.na(kg_main_climate_group)) ) # p = 0.00001
 
-kruskal.test(g_n2o_m_2_yr ~ hydrological_regime, data = subset(dat, !is.na(hydrological_regime)) ) # p = 0.0001
-
-kruskal.test(g_n2o_m_2_yr ~ instream_vegetation, data = subset(dat, !is.na(instream_vegetation)) ) # no sig diff
 
 
 #check for the pairwise differences
@@ -1177,9 +1253,15 @@ kruskal.test(g_n2o_m_2_yr ~ instream_vegetation, data = subset(dat, !is.na(instr
 kruskal.test(ch4_diff_g_ch4_m_2_yr ~ soil_type, data = subset(dat, !is.na(soil_type)) ) #p-value = 0.1292
 
 
-#### Kruskal wallis DOC ####
+#### Mann-Whitney DOC ####
 
-kruskal.test(doc_mg_l ~ soil_type, data = subset(dat, !is.na(soil_type)) ) # p <0.0001
+wilcox.test(doc_mg_l ~ soil_type, data = subset(dat, !is.na(soil_type)) ) # p <0.0001
+
+#### Kruskal wallis MAT ####
+
+kruskal.test(ma_temp_c ~ kg_main_climate_group, data = subset(dat, !is.na(kg_main_climate_group)) ) #sig
+
+pairwise.wilcox.test(dat$ma_temp_c[!is.na(dat$kg_main_climate_group)], dat$kg_main_climate_group[!is.na(dat$kg_main_climate_group)], p.adjust.method = "BH")  # sig
 
 #######################################
 
@@ -1187,24 +1269,31 @@ kruskal.test(doc_mg_l ~ soil_type, data = subset(dat, !is.na(soil_type)) ) # p <
 
 #Calculate CO2e of N2O
 #the GWP of N2O is 273 over a 100 yr horizon (IPCC, 2021)
-#the SGWP of N2O is 270 over a 100 year horizon (Neubauer and Megonigal, 2015)
-dat$N2O_CO2e <- (dat$g_n2o_m_2_yr*273)  
+#the SGWP of N2O is 270 over a 100 year horizon (Neubauer and Megonigal, 2015), and the cooling potential is 349
+#dat$N2O_CO2e <- (dat$g_n2o_m_2_yr*273)  
+
+dat$N2O_CO2e <- ifelse(dat$g_n2o_m_2_yr > 0, 
+                       dat$g_n2o_m_2_yr * 273, 
+                       dat$g_n2o_m_2_yr * 349)
 
 #Calculate CO2e of CH4
 #the GWP of methane is 27 over a 100 yr horizon (IPCC, 2021)
-#the SGWP of CH4 is 45 over a 100 year horizon (Neubauer and Megonigal, 2015)
-dat$CH4_CO2e <- (dat$ch4_diff_g_ch4_m_2_yr + dat$ch4_ebull_g_ch4_m_2_yr)*27 
+#the SGWP of CH4 is 45 over a 100 year horizon (Neubauer and Megonigal, 2015), cooling potential is 203
 
-dat$CH4_CO2e <- rowSums(cbind(dat$ch4_diff_g_ch4_m_2_yr, dat$ch4_ebull_g_ch4_m_2_yr), na.rm = TRUE) *27
+total_ch4 <- rowSums(cbind(dat$ch4_diff_g_ch4_m_2_yr, dat$ch4_ebull_g_ch4_m_2_yr), na.rm = TRUE)
 
-dat$CH4_CO2e[dat$CH4_CO2e == 0] <- NA
+# Apply the conditional multiplication
+dat$CH4_CO2e <- ifelse(total_ch4 > 0, 
+                       total_ch4 * 27, 
+                       total_ch4 * 203)
+
 
 # subset just the studies that measured all 3 gases
 
 
 subset_CO2eq <- dat[complete.cases(dat$CH4_CO2e, dat$N2O_CO2e, dat$g_co2_m_2_yr), ]
-# 32 obs
-length(unique(subset_CO2eq$authors)) #21
+# 36 obs
+length(unique(subset_CO2eq$authors)) #22
 
 
 mean(subset_CO2eq$g_co2_m_2_yr, na.rm=T)
@@ -1401,6 +1490,9 @@ dat_common <- dat %>% select(all_of(common_columns))%>%
 
 # Combine dry_dat and dat_common using bind_rows
 combined_data <- bind_rows(dry_dat_common, dat_common)
+
+#Summary data
+aggregate(g_co2_m_2_yr ~ hydrological_regime, data = combined_data,  FUN = function(x) c(mean = mean(x, na.rm = TRUE), sd = sd(x, na.rm = TRUE)))
 
 # test for differences between dry, perennial, and non-perennial flowing
 
