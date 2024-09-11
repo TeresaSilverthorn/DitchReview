@@ -426,6 +426,8 @@ dev.off() # the (b) plot will not align, so need to do it in post (.edt file in 
 
 st(dat, vars = c("g_co2_m_2_yr",  "g_n2o_m_2_yr")) #GHG summary stats
 
+sd(dat$g_n2o_m_2_yr, na.rm=T)
+
 # mean and 95% CI
 t_test_result <- t.test(dat$g_co2_m_2_yr, na.rm = TRUE)
 t_test_result$estimate # mean
