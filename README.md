@@ -1,6 +1,6 @@
 # DitchReview
 
-#Data and code associated with the manuscript "The importance of ditches and canals in global inland water greenhouse gas emission budgets" (working title) 
+#Data and code associated with the manuscript "The importance of ditches and canals in global inland water greenhouse gas budgets" (working title) 
 
 #This repository includes the R script "Ditch_data_analysis.R", used for data analysis and visualization, as well as the .csv data file "Ditch_data_extraction_2024-07-11.csv". 
 
