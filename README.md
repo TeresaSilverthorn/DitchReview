@@ -28,7 +28,7 @@
 
 #Elevation_masl: Elevation in m above sea leve. If not mentioned in the study, estimated via Google Earth and the reported coordinates of the sites (or as near as possible). 	
 
-M#ATemp_C: Mean annual temperature in degrees celsius. Usually this data is reported as a historic average, rather than the average for the study period, and the latter was less frequently available. If not reported in the study, historic values from another study in the same (or nearby) location is reported. 	
+#MATemp_C: Mean annual temperature in degrees celsius. Usually this data is reported as a historic average, rather than the average for the study period, and the latter was less frequently available. If not reported in the study, historic values from another study in the same (or nearby) location is reported. 	
 
 #MAPrecip_mm: Mean annual precipitation in mm. Usually this data is reported as a historic average, rather than the average for the study period, and the latter was less frequently available. If not reported in the study, historic values from another study in the same (or nearby) location is reported.
 
