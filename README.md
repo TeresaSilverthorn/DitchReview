@@ -2,6 +2,8 @@
 
 #Data and code associated with the publication "The importance of ditches and canals in global inland water CO2 and N2O budgets" in Global Change Biology (2025). 
 
+#Cite this data using the Zenodo doi: 10.5281/zenodo.14753050
+
 #This repository includes the R script "Ditch_data_analysis.R", used for data analysis and visualization, as well as the .csv data file "Ditch_data_extraction_2024-07-11.csv". 
 
 #Data dictionary for .csv file: 
