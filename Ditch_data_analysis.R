@@ -644,15 +644,15 @@ dev.off()
 citation("lme4")
 
 #### Sampling method ####
-CO2method <- ggplot(subset(dat, ghg_sampling_method!="Both"), aes(x=ghg_sampling_method , y=g_co2_m_2_yr, fill=ghg_sampling_method) )+   geom_boxplot(outlier.shape = NA) +  geom_point(position = position_jitter(width = 0.35), size = 2.5, alpha=0.5) + theme_minimal() +  theme(axis.title.x = element_blank(), axis.line = element_line(colour = "black"),   axis.ticks.y = element_line(), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),legend.position="none", axis.title = element_text(size = 12), axis.text = element_text(size = 12, color="black")) + scale_fill_manual(values=c("Concentration" = "#FFD3B5", "Chamber" = "#FF97B5")) + ylab(expression(g~CO[2]~m^-2*~yr^-1)) +   scale_y_continuous(trans = "sign", breaks = c(-10,1,10,100,1000,10000), labels = c("-10","1", "10", "100", "1,000", "10,000"))
+CO2method <- ggplot(subset(dat, ghg_sampling_method!="Both"), aes(x=ghg_sampling_method , y=g_co2_m_2_yr) )+   geom_boxplot(outlier.shape = NA, fill ="#C87542") +  geom_point(position = position_jitter(width = 0.35), size = 2.5, alpha=0.5) + theme_minimal() +  theme(axis.title.x = element_blank(), axis.line = element_line(colour = "black"),   axis.ticks.y = element_line(), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),legend.position="none", axis.title = element_text(size = 12), axis.text = element_text(size = 12, color="black"))  + ylab(expression(g~CO[2]~m^-2*~yr^-1)) +   scale_y_continuous(trans = "sign", breaks = c(-10,1,10,100,1000,10000), labels = c("-10","1", "10", "100", "1,000", "10,000"))  + scale_x_discrete(labels = c(  "Chamber" = "Chamber\n method", "Concentration" = "Concentration\nmethod"))
 CO2method
 
-N2Omethod <- ggplot(subset(dat, ghg_sampling_method!="Both"), aes(x=ghg_sampling_method , y=g_n2o_m_2_yr, fill=ghg_sampling_method) )+   geom_boxplot(outlier.shape = NA) +  geom_point(position = position_jitter(width = 0.35), size = 2.5, alpha=0.5) + theme_minimal() + theme(axis.title.x = element_blank(), axis.line = element_line(colour = "black"),   axis.ticks.y = element_line(), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),legend.position="none", axis.title = element_text(size = 12), axis.text = element_text(size = 12, color="black")) +  scale_fill_manual(values=c("Concentration" = "#FFD3B5", "Chamber" = "#FF97B5")) +  xlab("GHG sampling method") + ylab(expression(g~N[2]*`O`~m^-2~yr^-1)) + scale_y_continuous(trans = 'pseudo_log') 
+N2Omethod <- ggplot(subset(dat, ghg_sampling_method!="Both"), aes(x=ghg_sampling_method , y=g_n2o_m_2_yr) )+   geom_boxplot(outlier.shape = NA, fill="#78629B") +  geom_point(position = position_jitter(width = 0.35), size = 2.5, alpha=0.5) + theme_minimal() + theme(axis.title.x = element_blank(), axis.line = element_line(colour = "black"),   axis.ticks.y = element_line(), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),legend.position="none", axis.title = element_text(size = 12), axis.text = element_text(size = 12, color="black")) +   xlab("GHG sampling method") + ylab(expression(g~N[2]*`O`~m^-2~yr^-1)) + scale_y_continuous(trans = 'pseudo_log') + scale_x_discrete(labels = c(  "Chamber" = "Chamber\n method", "Concentration" = "Concentration\nmethod"))
 N2Omethod
 
 # Mean and standard deviation CO2/N2O by sampling method
-aggregate(g_n2o_m_2_yr ~ ghg_sampling_method, data = dat, 
-          FUN = function(x) c(mean = mean(x, na.rm = TRUE), sd = sd(x, na.rm = TRUE)))
+aggregate(g_co2_m_2_yr ~ ghg_sampling_method, data = dat, 
+          FUN = function(x) c(mean = mean(x, na.rm = TRUE), sd = sd(x, na.rm = TRUE), n=length(x)))
 
 #### Trophic status ####
 # Reorder factor levels more logically
@@ -680,7 +680,9 @@ dev.off()
 
 # Mean and standard deviation CO2 by trophic status
 aggregate(g_co2_m_2_yr ~ nutrient_status, data = dat, 
-    FUN = function(x) c(mean = mean(x, na.rm = TRUE), sd = sd(x, na.rm = TRUE)))
+          FUN = function(x) c(mean = mean(x, na.rm = TRUE), 
+                              sd = sd(x, na.rm = TRUE), 
+                              n = length(x)))
 
 
 tiff("N2Otrophic.tiff", units="in", width=6, height=5, res=300)
@@ -692,7 +694,7 @@ dev.off()
 
 # Mean and standard deviation CO2 by trophic status
 aggregate(g_n2o_m_2_yr ~ nutrient_status, data = dat, 
-          FUN = function(x) c(mean = mean(x, na.rm = TRUE), sd = sd(x, na.rm = TRUE)))
+          FUN = function(x) c(mean = mean(x, na.rm = TRUE), sd = sd(x, na.rm = TRUE), n = length(x)))
 
 #### Land use ####
 tiff("landuse_count.tiff", units="in", width=4, height=4, res=300)
@@ -703,24 +705,28 @@ dev.off()
 
 tiff("CO2landuse.tiff", units="in", width=6, height=4, res=300)
 
-CO2landuse <- ggplot(data = subset(dat, !is.na(land_use_clc)), aes(y=reorder(land_use_clc, g_co2_m_2_yr, FUN = mean, na.rm=T) , x=g_co2_m_2_yr, fill=land_use_clc)) + xlab("Land use") +
-  geom_boxplot(outlier.shape = NA) +  geom_point(position = position_jitter(height=0.25), size = 2.5, alpha=0.5) + theme_minimal() +
-  theme(axis.title.y = element_blank(), axis.line = element_line(colour = "black"),  panel.grid.major = element_blank(),  panel.grid.minor = element_blank(), axis.ticks.x = element_line(), legend.position="none", axis.title = element_text(size = 12), axis.text = element_text(size = 12, color="black"))  + ylab("Land use") + scale_fill_manual(values=c("Natural_Forest" = "#FFD3B5", "Wetland" = "#4E745E", "Agriculture" = "#FFACB7" , "Urban" = "#AFBCD3")) + xlab(expression(g~CO[2]~m^-2*~yr^-1))  + scale_y_discrete(labels = c('Wetland', 'Agriculture', 'Urban' , 'Natural/Forest')) +  scale_x_continuous(trans = "sign", breaks = c(-10,1,10,100,1000,10000), labels = c("-10","1", "10", "100", "1,000", "10,000"))
-CO2landuse
+CO2landuse <- ggplot(data = subset(dat, !is.na(land_use_clc)), aes(y=land_use_clc , x=g_co2_m_2_yr, fill=land_use_clc)) + xlab("Land use") +
+  geom_boxplot(outlier.shape = NA, fill = "#C87542") +  geom_point(position = position_jitter(height=0.25), size = 2.5, alpha=0.5) + theme_minimal() +
+  theme(plot.margin = margin(t = 10, r = 10, b = 10, l = 50),  
+    plot.title = element_text(hjust = -0.1, size = 12, face = "bold"),      
+          plot.title.position = "plot" , axis.title.y = element_blank(), axis.line = element_line(colour = "black"),  panel.grid.major = element_blank(),  panel.grid.minor = element_blank(), axis.ticks.x = element_line(), legend.position="none", axis.title = element_text(size = 12), axis.text = element_text(size = 12, color="black"))  + ylab("Land use")  + xlab(expression(g~CO[2]~m^-2*~yr^-1))  +  scale_x_continuous(trans = "sign", breaks = c(-10,1,10,100,1000,10000), labels = c("-10","1", "10", "100", "1,000", "10,000")) +  labs(  title = "(a)")   + scale_y_discrete(labels = c('Agriculture', 'Natural/Forest', 'Urban' , 'Wetland' ))
+CO2landuse 
 
 dev.off()
 
 tiff("N2Olanduse.tiff", units="in", width=6, height=4, res=300)
 
-N2Olanduse <- ggplot(data = subset(dat, !is.na(land_use_clc)), aes(y=reorder(land_use_clc, g_n2o_m_2_yr, FUN = mean, na.rm=T)  , x=g_n2o_m_2_yr, fill=land_use_clc)) +  geom_boxplot(outlier.shape = NA) +  geom_point(position = position_jitter(width = 0.15), size = 2.5, alpha=0.5) + theme_minimal() +
- theme(axis.ticks.x = element_line(), axis.line = element_line(colour = "black"), axis.title.y = element_blank(), panel.grid.major = element_blank(),  panel.grid.minor = element_blank(), legend.position="none", axis.title = element_text(size = 12), axis.text = element_text(size = 12, color="black"))  + scale_fill_manual(values=c("Natural_Forest" = "#FFD3B5", "Wetland" = "#4E745E", "Agriculture" = "#FFACB7" , "Urban" = "#AFBCD3")) + scale_y_discrete(labels = c( 'Urban', 'Wetland', 'Natural/Forest', 'Agriculture'))  + xlab(expression(g~N[2]*`O`~m^-2~yr^-1)) + scale_x_continuous(trans = 'pseudo_log') 
-N2Olanduse
+N2Olanduse <- ggplot(data = subset(dat, !is.na(land_use_clc)), aes(y=land_use_clc, x=g_n2o_m_2_yr, fill=land_use_clc)) +  geom_boxplot(outlier.shape = NA, fill="#78629B") +  geom_point(position = position_jitter(width = 0.15), size = 2.5, alpha=0.5) + theme_minimal() +
+ theme(plot.margin = margin(t = 10, r = 10, b = 10, l = 50),  
+       plot.title = element_text(hjust = -0.1, size = 12, face="bold"),      
+       plot.title.position = "plot" , axis.ticks.x = element_line(), axis.line = element_line(colour = "black"), axis.title.y = element_blank(), panel.grid.major = element_blank(),  panel.grid.minor = element_blank(), legend.position="none", axis.title = element_text(size = 12), axis.text = element_text(size = 12, color="black"))    + xlab(expression(g~N[2]*`O`~m^-2~yr^-1)) + scale_x_continuous(trans = 'pseudo_log') + labs(  title = "(b)")  + scale_y_discrete(labels = c('Agriculture', 'Natural/Forest', 'Urban' , 'Wetland' ))
+N2Olanduse  
 
 dev.off()
 
 # Mean and standard deviation CO2/N2O  by land use
-aggregate(g_n2o_m_2_yr ~ land_use_clc, data = dat, 
-          FUN = function(x) c(mean = mean(x, na.rm = TRUE), sd = sd(x, na.rm = TRUE)))
+aggregate(g_co2_m_2_yr ~ land_use_clc, data = dat, 
+          FUN = function(x) c(mean = mean(x, na.rm = TRUE), sd = sd(x, na.rm = TRUE), n = length(x)))
 
 
 
@@ -734,7 +740,7 @@ dev.off()
 
 tiff("CO2soil.tiff", units="in", width=4, height=4, res=300)
 
-CO2soil <- ggplot(subset(dat, !is.na(soil_type)), aes(x=soil_type , y=g_co2_m_2_yr, fill=soil_type)) +   geom_boxplot(outlier.shape = NA) +  geom_point(position = position_jitter(width = 0.35), size = 2.5, alpha=0.5) + theme_minimal() + theme(axis.title.x = element_blank(), axis.line = element_line(colour = "black"),   axis.ticks.y = element_line(), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.position="none", axis.title = element_text(size = 12), axis.text = element_text(size = 12, color="black")) + scale_fill_manual(values=c("#FFACB7", "#4E745E")) +  xlab("Soil type")  +ylab(expression(g~CO[2]~m^-2*~yr^-1)) +  scale_y_continuous(trans = "sign", breaks = c(-10,1,10,100,1000,10000), labels = c("-10","1", "10", "100", "1,000", "10,000"))
+CO2soil <- ggplot(subset(dat, !is.na(soil_type)), aes(x=soil_type , y=g_co2_m_2_yr, fill=soil_type)) +   geom_boxplot(outlier.shape = NA,  fill = "#C87542") +  geom_point(position = position_jitter(width = 0.35), size = 2.5, alpha=0.5) + theme_minimal() + theme(plot.margin = margin(t = 10, r = 10, b = 10, l = 40),  plot.title = element_text(hjust = -0.15, size = 12, face="bold"), plot.title.position = "plot" , axis.title.x = element_blank(), axis.line = element_line(colour = "black"),   axis.ticks.y = element_line(), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.position="none", axis.title = element_text(size = 12), axis.text = element_text(size = 12, color="black")) +  xlab("Soil type")  +ylab(expression(g~CO[2]~m^-2*~yr^-1)) +  scale_y_continuous(trans = "sign", breaks = c(-10,1,10,100,1000,10000), labels = c("-10","1", "10", "100", "1,000", "10,000")) +  labs(  title = "(c)") 
 CO2soil
 
 dev.off()
@@ -743,14 +749,14 @@ dev.off()
 
 tiff("N2Osoil.tiff", units="in", width=4, height=4, res=300)
 
-N2Osoil <- ggplot(subset(dat, !is.na(soil_type)),  aes(x=soil_type , y=g_n2o_m_2_yr, fill=soil_type)) +   geom_boxplot(outlier.shape = NA) +  geom_point(position = position_jitter(width = 0.35), size = 2.5, alpha=0.5) + theme_minimal() + theme(axis.title.x = element_blank(), axis.line = element_line(colour = "black"),   axis.ticks.y = element_line(), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.position="none", axis.title = element_text(size = 12), axis.text = element_text(size = 12, color="black")) + scale_fill_manual(values=c("#FFACB7", "#4E745E")) +  xlab("Soil type") + ylab(expression(g~N[2]*`O`~m^-2~yr^-1)) + scale_y_continuous(trans = 'pseudo_log') 
+N2Osoil <- ggplot(subset(dat, !is.na(soil_type)),  aes(x=soil_type , y=g_n2o_m_2_yr, fill=soil_type)) +   geom_boxplot(outlier.shape = NA, fill="#78629B") +  geom_point(position = position_jitter(width = 0.35), size = 2.5, alpha=0.5) + theme_minimal() + theme(plot.margin = margin(t = 10, r = 10, b = 10, l = 40),  plot.title = element_text(hjust = -0.15, size = 12, face="bold"), plot.title.position = "plot", axis.title.x = element_blank(), axis.line = element_line(colour = "black"),   axis.ticks.y = element_line(), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), legend.position="none", axis.title = element_text(size = 12), axis.text = element_text(size = 12, color="black")) +  xlab("Soil type") + ylab(expression(g~N[2]*`O`~m^-2~yr^-1)) + scale_y_continuous(trans = 'pseudo_log') + labs(  title = "(d)") 
 N2Osoil
 
 dev.off()
 
 # Mean and standard deviation N2O by soil type
 aggregate(g_n2o_m_2_yr ~ soil_type, data = dat, 
-          FUN = function(x) c(mean = mean(x, na.rm = TRUE), sd = sd(x, na.rm = TRUE)))
+          FUN = function(x) c(mean = mean(x, na.rm = TRUE), sd = sd(x, na.rm = TRUE),  n = length(x)))
 
 
 
@@ -779,7 +785,7 @@ dev.off()
 
 # Mean and standard deviation CO2 by hydrological regime
 aggregate(g_co2_m_2_yr ~ hydrological_regime, data = dat, 
-FUN = function(x) c(mean = mean(x, na.rm = TRUE), sd = sd(x, na.rm = TRUE)))
+FUN = function(x) c(mean = mean(x, na.rm = TRUE), sd = sd(x, na.rm = TRUE),  n = length(x)))
 
 
 tiff("N2Ohydro.tiff", units="in", width=4, height=4, res=300)
@@ -791,7 +797,7 @@ dev.off()
 
 # Mean and standard deviation N2O by hydrological regime
 aggregate(g_n2o_m_2_yr ~ hydrological_regime, data = dat, 
-   FUN = function(x) c(mean = mean(x, na.rm = TRUE), sd = sd(x, na.rm = TRUE)))
+   FUN = function(x) c(mean = mean(x, na.rm = TRUE), sd = sd(x, na.rm = TRUE), n = length(x)))
 
 
 #### Climate zone ####
@@ -817,7 +823,7 @@ CO2KGclimate
 
 # Mean and standard deviation CO2 by climate
 aggregate(g_co2_m_2_yr ~ kg_main_climate_group, data = dat, 
-          FUN = function(x) c(mean = mean(x, na.rm = TRUE), sd = sd(x, na.rm = TRUE)))
+          FUN = function(x) c(mean = mean(x, na.rm = TRUE), sd = sd(x, na.rm = TRUE), n = length(x)))
 
 
 # scale_y_continuous(trans = 'pseudo_log', breaks = c(-100,-10, 1, 10, 100, 1000, 10000)) 
@@ -845,7 +851,7 @@ dev.off()
 
 # Mean and standard deviation N2O by climate
 aggregate(g_n2o_m_2_yr ~ kg_main_climate_group, data = dat, 
-          FUN = function(x) c(mean = mean(x, na.rm = TRUE), sd = sd(x, na.rm = TRUE)))
+          FUN = function(x) c(mean = mean(x, na.rm = TRUE), sd = sd(x, na.rm = TRUE), n = length(x)))
 
 
 N2Oclimate <- ggplot(dat, aes(x=climate_zone , y=g_n2o_m_2_yr, fill=climate_zone)) + geom_boxplot(outlier.shape = NA) +  geom_point(position = position_jitter(width = 0.15), size = 2) + theme_minimal() #+ scale_y_log10()
@@ -855,15 +861,19 @@ N2Oclimate
 
 #### Vegetation presence / absence ####
 
-CO2veg <- ggplot(subset(dat, complete.cases(instream_vegetation)), aes(x=instream_vegetation, y=g_co2_m_2_yr, fill=instream_vegetation)) + geom_boxplot(outlier.shape = NA) +  geom_point(position = position_jitter(width = 0.35), size = 2.5, alpha=0.5) + theme_minimal() +  theme(axis.title.x = element_blank(), axis.line = element_line(colour = "black"),   axis.ticks.y = element_line(), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),legend.position="none", axis.title = element_text(size = 12), axis.text = element_text(size = 12, color="black")) + scale_fill_manual(values = c("Yes" = "#AAD487", "No" = "#4780B3")) + scale_x_discrete(labels = c('No veg', 'Veg'))  + ylab(expression(g~CO[2]~m^-2*~yr^-1)) +  scale_y_continuous(trans = "sign", breaks = c(-10,1,10,100,1000,10000), labels = c("-10","1", "10", "100", "1,000", "10,000"))
+CO2veg <- ggplot(subset(dat, complete.cases(instream_vegetation)), aes(x=instream_vegetation, y=g_co2_m_2_yr, fill=instream_vegetation)) + geom_boxplot(outlier.shape = NA, fill = "#C87542") +  geom_point(position = position_jitter(width = 0.35), size = 2.5, alpha=0.5) + theme_minimal() +  theme(
+  plot.margin = margin(t = 10, r = 10, b = 10, l = 40),  
+  plot.title = element_text(hjust = -0.15, size = 12, face="bold"),   
+  plot.title.position = "plot" ,
+    axis.title.x = element_blank(), axis.line = element_line(colour = "black"),   axis.ticks.y = element_line(), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),legend.position="none", axis.title = element_text(size = 12), axis.text = element_text(size = 12, color="black")) +  scale_x_discrete(labels = c('No veg', 'Veg'))  + ylab(expression(g~CO[2]~m^-2*~yr^-1)) +  scale_y_continuous(trans = "sign", breaks = c(-10,1,10,100,1000,10000), labels = c("-10","1", "10", "100", "1,000", "10,000")) + labs(  title = "(a)") 
 CO2veg
 
-N2Oveg <- ggplot(subset(dat, complete.cases(instream_vegetation)), aes(x=instream_vegetation, y=g_n2o_m_2_yr, fill=instream_vegetation)) + geom_boxplot(outlier.shape = NA) +  geom_point(position = position_jitter(width = 0.35), size = 2.5, alpha=0.5) + theme_minimal() +  theme(axis.title.x = element_blank(), axis.line = element_line(colour = "black"),   axis.ticks.y = element_line(), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),legend.position="none", axis.title = element_text(size = 12), axis.text = element_text(size = 12, color="black")) + scale_x_discrete(labels = c('No veg', 'Veg')) + scale_fill_manual(values = c("Yes" = "#AAD487", "No" = "#4780B3")) + ylab(expression(g~N[2]*`O`~m^-2~yr^-1)) + scale_y_continuous(trans = 'pseudo_log') 
+N2Oveg <- ggplot(subset(dat, complete.cases(instream_vegetation)), aes(x=instream_vegetation, y=g_n2o_m_2_yr, fill=instream_vegetation)) + geom_boxplot(outlier.shape = NA, fill="#78629B") +  geom_point(position = position_jitter(width = 0.35), size = 2.5, alpha=0.5) + theme_minimal() +  theme(plot.margin = margin(t = 10, r = 10, b = 10, l = 40),  plot.title = element_text(hjust = -0.15, size = 12, face="bold"), plot.title.position = "plot" ,  axis.title.x = element_blank(), axis.line = element_line(colour = "black"),   axis.ticks.y = element_line(), panel.grid.major = element_blank(), panel.grid.minor = element_blank(),legend.position="none", axis.title = element_text(size = 12), axis.text = element_text(size = 12, color="black")) + scale_x_discrete(labels = c('No veg', 'Veg')) + ylab(expression(g~N[2]*`O`~m^-2~yr^-1)) + scale_y_continuous(trans = 'pseudo_log')  + labs(  title = "(b)") 
 N2Oveg
 
 # Mean and standard deviation N2O by veg presence/absence
-aggregate(g_n2o_m_2_yr ~ instream_vegetation, data = dat, 
-          FUN = function(x) c(mean = mean(x, na.rm = TRUE), sd = sd(x, na.rm = TRUE)))
+aggregate(g_co2_m_2_yr ~ instream_vegetation, data = dat, 
+          FUN = function(x) c(mean = mean(x, na.rm = TRUE), sd = sd(x, na.rm = TRUE), n = length(x)))
 
 
 #### Combine data for supplementary information ####
@@ -877,10 +887,10 @@ combine
 dev.off()
 
 
-tiff("land_use_combined", units="in", width=6, height=6, res=300)
+tiff("land_use_combined", units="in", width=6.5, height=6, res=300)
 
 combine <- ggarrange(CO2landuse, N2Olanduse, 
-                      ncol = 1, nrow = 2, align="hv",common.legend = F, labels = c("(a)", "(b)"))
+                      ncol = 1, nrow = 2, align="hv",common.legend = F)
 combine
 
 dev.off()
@@ -894,10 +904,10 @@ combine
 
 dev.off()
 
-tiff("soil_veg", units="in", width=6, height=6, res=300)
+tiff("soil_veg", units="in", width=6.5, height=6, res=300)
 
 combine <- ggarrange(CO2veg, N2Oveg, CO2soil, N2Osoil, 
-                     ncol = 2, nrow = 2, align="hv",common.legend = F, labels = c("(a)", "(b)", "(c)", ("d")) )
+                     ncol = 2, nrow = 2, align="hv",common.legend = F)
 combine
 
 dev.off()
@@ -1315,117 +1325,22 @@ mean(subset_CO2eq$CH4_CO2e, na.rm=T)/b*100
 
 mean(subset_CO2eq$g_co2_m_2_yr, na.rm=T)/b*100
 
-##################################################
+# Total ditch emissions N2O and CO2 emissions in CO2 equivalents
 
-#### Quantile regressions ####
+#N2O : 201.4129 g CO2e m-2 yr-1
+#ditch surface area: 53,534,250,000 m2
 
-#try it out for a "wedge" distribution
-#plot the relationship
-
-ggplot(dat, aes(mean_velocity_m_s, g_n2o_m_2_yr))+
-  geom_point()+
-  geom_smooth(method = lm, se = F, color = "darkturquoise")+ #linear model
-  geom_quantile(color = "red", quantiles = 0.5)+
-  geom_quantile(color = "black", alpha = 0.2, #Quantreg based on median
-                quantiles = seq(.05, .95, by = 0.05)) #multiple models from the 5th percentile to 95th percentile
-
-ggplot(dat, aes(ma_temp_c, g_n2o_m_2_yr))+
-  geom_point()+
-  geom_smooth(method = lm, se = F, color = "darkturquoise")+ #linear model
-  geom_quantile(color = "red", quantiles = 0.5)+
-  geom_quantile(color = "black", alpha = 0.2, #Quantreg based on median
-                quantiles = seq(.05, .95, by = 0.05)) #multiple models from the 5th percentile to 95th
-
-ggplot(dat, aes(ma_temp_c, g_co2_m_2_yr))+
-  geom_point()+
-  geom_smooth(method = lm, se = F, color = "darkturquoise")+ #linear model
-  geom_quantile(color = "red", quantiles = 0.5)+
-  geom_quantile(color = "black", alpha = 0.2, #Quantreg based on median
-                quantiles = seq(.05, .95, by = 0.05)) #multiple models from the 5th percentile to 95th
-
-ggplot(dat, aes(do_mg_l, g_co2_m_2_yr))+
-  geom_point()+
-  geom_smooth(method = lm, se = F, color = "darkturquoise")+ #linear model
-  geom_quantile(color = "red", quantiles = 0.5)+
-  geom_quantile(color = "black", alpha = 0.2, #Quantreg based on median
-                quantiles = seq(.05, .95, by = 0.05))
-
-ggplot(dat, aes(pH, g_co2_m_2_yr))+
-  geom_point()+
-  geom_smooth(method = lm, se = F, color = "darkturquoise")+ #linear model
-  geom_quantile(color = "red", quantiles = 0.5)+
-  geom_quantile(color = "black", alpha = 0.2, #Quantreg based on median
-                quantiles = seq(.05, .95, by = 0.05))
-
-ggplot(dat, aes(ma_precip_mm, g_co2_m_2_yr))+
-  geom_point()+
-  geom_smooth(method = lm, se = F, color = "darkturquoise")+ #linear model
-  geom_quantile(color = "red", quantiles = 0.5)+
-  geom_quantile(color = "black", alpha = 0.2, #Quantreg based on median
-                quantiles = seq(.05, .95, by = 0.05))
+210*53534250000 #1.124219e+13 g or 11.2 Tg
 
 
-ggplot(dat, aes(nitrate_mg_l, g_n2o_m_2_yr))+
-  geom_point()+
-  geom_smooth(method = lm, se = F, color = "darkturquoise")+ #linear model
-  geom_quantile(color = "red", quantiles = 0.5)+
-  geom_quantile(color = "black", alpha = 0.2, #Quantreg based on median
-                quantiles = seq(.05, .95, by = 0.05))
+#CO2 2085 g CO2e m-2 yr-1
+2085*53534250000 #1.116189e+14 or 112 Tg
 
-ggplot(dat, aes(tn_mg_l, g_n2o_m_2_yr))+ xlim(0,10) +
-  geom_point()+
-  geom_smooth(method = lm, se = F, color = "darkturquoise")+ #linear model
-  geom_quantile(color = "red", quantiles = 0.5)+
-  geom_quantile(color = "black", alpha = 0.2, #Quantreg based on median
-                quantiles = seq(.05, .95, by = 0.05))
+# or a total of 2295 CO2e
+2295*53534250000 #1.228611e+14 or 122.861099 Tg or 122,861,099 tonnes or 122.86 million tonnes
+# considering B.C.'s gross GHG emissions in 2021 were 62.0 million tonnes of carbon dioxide equivalent (MtCO2e).
 
-
-taus<-seq(from = .05, to = .95, by = 0.05) #Taus ranging from 0.05 to 0.95 with a step value of 0.05
-quant_all  <- rq(mean_water_depth_m~g_co2_m_2_yr, tau = taus, 
-                 data = dat)
-
-sumQR<- summary(quant_all)
-
-plot(sumQR) #some these do not look like the tutorial...
-
-#can compare the AIC values of these models
-aic_df <- data.frame(AIC = AIC(quant_all), model = paste("tau =",taus))
-print(subset(aic_df, AIC <= min(aic_df$AIC) + 2)) # pick the model with the lowest AIC score, those within 2 delta AIC are comparable
-
-summary(quant_all) |> plot("g_co2_m_2_yr") # quantile process plot
-
-#############################################
-
-#### Run linear model (saturated) and remove non-significant predictors. Can also include interactions... There are too many missing values for this, inthe quantitative variables. But could try with categorical? 
-
-## Could try random forest? but also doesnt handle NAs well...
-
-colnames(dat) # try lmer adding variables that you have for most of the data points...
-
-CO2 <- subset(dat, complete.cases(g_co2_m_2_yr))
-#we have 92 observations of CO2 data
-
-# Create a table of the number of non-NA values in each column
-non_na_counts <- sapply(CO2, function(x) sum(!is.na(x)))
-non_na_df <- data.frame(Column = names(non_na_counts), Non_NA_Counts = non_na_counts)
-
-#we have complete data for: country, lat, lon, sampling period/frequency, masl, temp, precip, climate, soil type, ghg sampling method, land use
-# hydrological regime missing 3 obs
-# width missing 13 obs
-# nutrient status missing 15 obs
-# depth missing 40 obs
-# the rest missing even more
-
-
-CO2_lmer <- lmer(g_co2_m_2_yr~ 
- elevation_masl +  ma_precip_mm + soil_type + hydrological_regime + kg_main_climate_group + land_use_clc + (1 | authors), data=dat)    # account for the random effect of the study with "authors"   # remove non-significant terms: latitude, ma_tmep_c
-summary(CO2_lmer)
-plot(CO2_lmer) 
-qqnorm(resid(CO2_lmer))
-vif(CO2_lmer)
-
-emmeans(CO2_lmer, pairwise ~ kg_main_climate_group) # no sig
-emmeans(CO2_lmer, pairwise ~ land_use_clc) # natural-urban and natural-wetland
+112.86/62 #= 1.820323
 
 
 ############################################
@@ -1494,7 +1409,7 @@ dat_common <- dat %>% select(all_of(common_columns))%>%
 combined_data <- bind_rows(dry_dat_common, dat_common)
 
 #Summary data
-aggregate(g_co2_m_2_yr ~ hydrological_regime, data = combined_data,  FUN = function(x) c(mean = mean(x, na.rm = TRUE), sd = sd(x, na.rm = TRUE)))
+aggregate(g_n2o_m_2_yr ~ hydrological_regime, data = combined_data,  FUN = function(x) c(mean = mean(x, na.rm = TRUE), sd = sd(x, na.rm = TRUE), n = length(x))) 
 
 # test for differences between dry, perennial, and non-perennial flowing
 
