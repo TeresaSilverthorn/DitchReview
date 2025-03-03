@@ -1,6 +1,8 @@
 # DitchReview
 
-#Data and code associated with the manuscript "The importance of ditches and canals in global inland water greenhouse gas emission budgets" (working title) 
+#Data and code associated with the publication "The importance of ditches and canals in global inland water CO2 and N2O budgets" in Global Change Biology (2025). 
+
+#Cite this data using the Zenodo doi: 10.5281/zenodo.14753050
 
 #This repository includes the R script "Ditch_data_analysis.R", used for data analysis and visualization, as well as the .csv data file "Ditch_data_extraction_2024-07-11.csv". 
 
@@ -28,7 +30,7 @@
 
 #Elevation_masl: Elevation in m above sea leve. If not mentioned in the study, estimated via Google Earth and the reported coordinates of the sites (or as near as possible). 	
 
-M#ATemp_C: Mean annual temperature in degrees celsius. Usually this data is reported as a historic average, rather than the average for the study period, and the latter was less frequently available. If not reported in the study, historic values from another study in the same (or nearby) location is reported. 	
+#MATemp_C: Mean annual temperature in degrees celsius. Usually this data is reported as a historic average, rather than the average for the study period, and the latter was less frequently available. If not reported in the study, historic values from another study in the same (or nearby) location is reported. 	
 
 #MAPrecip_mm: Mean annual precipitation in mm. Usually this data is reported as a historic average, rather than the average for the study period, and the latter was less frequently available. If not reported in the study, historic values from another study in the same (or nearby) location is reported.
 
