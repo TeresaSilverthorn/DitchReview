@@ -709,7 +709,8 @@ CO2landuse <- ggplot(data = subset(dat, !is.na(land_use_clc)), aes(y=land_use_cl
   geom_boxplot(outlier.shape = NA, fill = "#C87542") +  geom_point(position = position_jitter(height=0.25), size = 2.5, alpha=0.5) + theme_minimal() +
   theme(plot.margin = margin(t = 10, r = 10, b = 10, l = 50),  
     plot.title = element_text(hjust = -0.1, size = 12, face = "bold"),      
-          plot.title.position = "plot" , axis.title.y = element_blank(), axis.line = element_line(colour = "black"),  panel.grid.major = element_blank(),  panel.grid.minor = element_blank(), axis.ticks.x = element_line(), legend.position="none", axis.title = element_text(size = 12), axis.text = element_text(size = 12, color="black"))  + ylab("Land use")  + xlab(expression(g~CO[2]~m^-2*~yr^-1))  +  scale_x_continuous(trans = "sign", breaks = c(-10,1,10,100,1000,10000), labels = c("-10","1", "10", "100", "1,000", "10,000")) +  labs(  title = "(a)")   + scale_y_discrete(labels = c('Agriculture', 'Natural/Forest', 'Urban' , 'Wetland' ))
+          plot.title.position = "plot" , axis.title.y = element_blank(), axis.line = element_line(colour = "black"),  panel.grid.major = element_blank(),  panel.grid.minor = element_blank(), axis.ticks.x = element_line(), legend.position="none", axis.title = element_text(size = 14), axis.text.y = element_text(size = 14, color="black"), axis.text.x = element_text(size = 12, color="black")) + 
+  ylab("Land use")  + xlab(expression(g~CO[2]~m^-2*~yr^-1))  +  scale_x_continuous(trans = "sign", breaks = c(-10,1,10,100,1000,10000), labels = c("-10","1", "10", "100", "1,000", "10,000")) +  labs(  title = "(a)")   + scale_y_discrete(labels = c('Agriculture', 'Natural/Forest', 'Urban' , 'Wetland' ))
 CO2landuse 
 
 dev.off()
@@ -719,7 +720,7 @@ tiff("N2Olanduse.tiff", units="in", width=6, height=4, res=300)
 N2Olanduse <- ggplot(data = subset(dat, !is.na(land_use_clc)), aes(y=land_use_clc, x=g_n2o_m_2_yr, fill=land_use_clc)) +  geom_boxplot(outlier.shape = NA, fill="#78629B") +  geom_point(position = position_jitter(width = 0.15), size = 2.5, alpha=0.5) + theme_minimal() +
  theme(plot.margin = margin(t = 10, r = 10, b = 10, l = 50),  
        plot.title = element_text(hjust = -0.1, size = 12, face="bold"),      
-       plot.title.position = "plot" , axis.ticks.x = element_line(), axis.line = element_line(colour = "black"), axis.title.y = element_blank(), panel.grid.major = element_blank(),  panel.grid.minor = element_blank(), legend.position="none", axis.title = element_text(size = 12), axis.text = element_text(size = 12, color="black"))    + xlab(expression(g~N[2]*`O`~m^-2~yr^-1)) + scale_x_continuous(trans = 'pseudo_log') + labs(  title = "(b)")  + scale_y_discrete(labels = c('Agriculture', 'Natural/Forest', 'Urban' , 'Wetland' ))
+       plot.title.position = "plot" , axis.ticks.x = element_line(), axis.line = element_line(colour = "black"), axis.title.y = element_blank(), panel.grid.major = element_blank(),  panel.grid.minor = element_blank(), legend.position="none", axis.title = element_text(size = 14), axis.text.y = element_text(size = 14, color="black"), axis.text.x = element_text(size = 12, color="black"))    + xlab(expression(g~N[2]*`O`~m^-2~yr^-1)) + scale_x_continuous(trans = 'pseudo_log') + labs(  title = "(b)")  + scale_y_discrete(labels = c('Agriculture', 'Natural/Forest', 'Urban' , 'Wetland' ))
 N2Olanduse  
 
 dev.off()
@@ -887,7 +888,7 @@ combine
 dev.off()
 
 
-tiff("land_use_combined", units="in", width=6.5, height=6, res=300)
+tiff("land_use_combined2.tiff", units="in", width=5.5, height=5, res=300)
 
 combine <- ggarrange(CO2landuse, N2Olanduse, 
                       ncol = 1, nrow = 2, align="hv",common.legend = F)
